@@ -1,0 +1,6 @@
+"0","# Clear previous plots"
+"0","circos.clear()"
+"0","circos.par(gap.degree = 5)"
+"0",""
+"0","# Initialize the genome data"
+"0","circos.genomicInitialize(genome_lengths, plotType = ""axis"")"

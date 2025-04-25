@@ -1,0 +1,7 @@
+"0",""
+"0","# Add a new track with different colors for each chromosome"
+"0","circos.genomicTrackPlotRegion(genome_lengths, panel.fun = function(region, value, ...) {"
+"0","  sector.index <- get.cell.meta.data(""sector.index"")"
+"0","  col <- colors[sector.index]"
+"0","  circos.genomicRect(region, value, col = col, border = NA)"
+"0","}, bg.border = NA, track.height = 0.1, ylim = c(0, 1))"

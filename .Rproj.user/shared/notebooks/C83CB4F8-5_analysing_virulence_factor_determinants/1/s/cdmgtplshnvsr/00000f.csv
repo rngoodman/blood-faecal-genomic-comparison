@@ -1,0 +1,3 @@
+"0","#DASSIM <- DASSIM %>% select(matches(""^ybt|^irp|^fyu""))"
+"0",""
+"0","iron_VF <- ab_tab %>% filter(grepl(""ybt|fyu|irp"", GENE))"

@@ -1,0 +1,8 @@
+"0",""
+"0","# Update genome length table with actual contig sizes"
+"0","genome_lengths <- contig_lengths %>%"
+"0","  dplyr::mutate(start = 0, end = length) %>%"
+"0","  dplyr::select(chr, start, end)"
+"0",""
+"0","# Add dummy numeric column as before"
+"0","genome_lengths$value <- 1"

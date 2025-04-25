@@ -1,0 +1,3333 @@
+#_______________________________
+
+# > Using Circularize circos.genomicInitialize for BLAST comparison #######
+#_______________________________
+
+library(Biostrings)
+library(dplyr)
+library(circlize)
+library(colorspace)
+
+
+#_______________________________
+
+# > General Example #######
+#_______________________________
+
+parse_blast <- function(blast_file) {
+  blast_data <- read.table(blast_file, header = FALSE, stringsAsFactors = FALSE)
+  colnames(blast_data) <- c("qseqid", "sseqid", "pident", "length", "mismatch", 
+                            "gapopen", "qstart", "qend", "sstart", "send", 
+                            "evalue", "bitscore")
+  return(blast_data)
+}
+
+blast_data <- parse_blast("BLAST/FSFC1386_vs_FSBL1386.blastn")
+
+blast_data <- parse_blast("/Users/richard.goodman/Library/CloudStorage/OneDrive-LSTM/R Programming/R Projects/16_Blood_Fecal_paired/BLAST/FSBL1386_vs_FSFC1386.blastn")
+
+
+
+# Prepare data frames for genomic initialization
+query_genome <- blast_data %>%
+  dplyr::select(qseqid, qstart, qend) %>% 
+  dplyr::rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome <- blast_data %>%
+  dplyr::select(sseqid, sstart, send) %>%
+  dplyr::rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths <- query_genome %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths <- sample_genome %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+
+extra_contigs <- data.frame(
+  chr = c("FSFC1386_plasmid00002"),
+  start = c(0),
+  end = c(6415)
+)
+
+# Merge the lengths data for circos initialization
+genome_lengths <- rbind(query_lengths,extra_contigs, sample_lengths)
+
+genome_lengths
+
+genome_lengths$chr = gsub("chromosome0000", "chr", genome_lengths$chr)
+genome_lengths$chr <- gsub("plasmid0000", "p", genome_lengths$chr)
+genome_lengths$chr <- gsub("FS", "", genome_lengths$chr)
+genome_lengths$chr <- gsub("_", " ", genome_lengths$chr)
+genome_lengths$chr <- gsub("1386", "", genome_lengths$chr)
+
+genome_lengths
+
+# Add a dummy numeric column
+genome_lengths$value <- 1
+
+
+# Define colors for specific sequences
+colors <- c("FC chr1" = "#176082", "FC p1" = "#08306B")
+
+colors = c("FC chr1" = "#176082", 
+           "FC p1" = "#08306B",
+           "FC p2" = "#2171B5",
+           "FC p3" = "#4292C6",
+           "FC p4" = "#6BAED6",
+           "FC p5" = "#9ECAE1",
+           "FC p6" =  "#C0B0E6",
+           "FC p7" = "#A899CC",
+           "FC p7" = "#9073B3",
+           "BL chr1" = "#C00001",
+           "BL p1" = "#A50F15",
+           "BL p2" = "#CB181D",
+           "BL p3" = "#EF3B2C",
+           "BL p4" = "#FB6A4A",
+           "BL p5" = "#FC9272",
+           "BL p6" = "#FEE0D2",
+           "BL p7" = "#FFEBEE")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 5)
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths, plotType = "axis")
+
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.1, ylim = c(0, 1))
+
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(2, 0.5)
+  )
+}, bg.border = NA)
+
+# Clean up the chromosome and plasmid names in the BLAST data
+blast_data$qseqid <- gsub("chromosome0000", "chr", blast_data$qseqid)
+blast_data$qseqid <- gsub("plasmid0000", "p", blast_data$qseqid)
+blast_data$qseqid <- gsub("FS", "", blast_data$qseqid)
+blast_data$qseqid <- gsub("_", " ", blast_data$qseqid)
+blast_data$qseqid <- gsub("1386", "", blast_data$qseqid)
+
+blast_data$sseqid <- gsub("chromosome0000", "chr", blast_data$sseqid)
+blast_data$sseqid <- gsub("plasmid0000", "p", blast_data$sseqid)
+blast_data$sseqid <- gsub("FS", "", blast_data$sseqid)
+blast_data$sseqid <- gsub("_", " ", blast_data$sseqid)
+blast_data$sseqid <- gsub("1386", "", blast_data$sseqid)
+
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data)) {
+  query_seq <- blast_data$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data$qseqid[i], start = blast_data$qstart[i], end = blast_data$qend[i]),
+    region2 = data.frame(chr = blast_data$sseqid[i], start = blast_data$sstart[i], end = blast_data$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+
+# Add a title to the plot with increased text size
+title("Genome Comparisons Using Circos Plot", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+
+
+#_______________________________
+
+# > 1386 FC v FC #######
+#_______________________________
+
+parse_blast <- function(blast_file) {
+  blast_data <- read.table(blast_file, header = FALSE, stringsAsFactors = FALSE)
+  colnames(blast_data) <- c("qseqid", "sseqid", "pident", "length", "mismatch", 
+                            "gapopen", "qstart", "qend", "sstart", "send", 
+                            "evalue", "bitscore")
+  return(blast_data)
+}
+
+blast_data <- parse_blast("BLAST/FSFC1386_test_vs_FSFC1386.blastn")
+
+unique(blast_data$pident)
+
+
+# Filter percentage identity to be only 100 and above the length of the shortest contig length 
+
+# blast_data = blast_data %>% filter(pident == 100 & length > min(genome_lengths$end))
+
+# Filter percentage identity to be only 100 and above a certain length 
+
+# blast_data = blast_data %>% filter(pident == 100 & length > 2000)
+
+# blast_data = blast_data %>% filter(pident >= 99.5 & length >= 0.9*(min(genome_lengths$end)))
+
+# Filter percentage identity to be above or greater than 99 and above a certain length
+# blast_data = blast_data %>% filter(pident >= 99)
+
+blast_data = blast_data %>% filter(pident >= 99.9 & length > 2000)
+
+unique(blast_data$pident)
+
+unique(blast_data$length)
+
+# Prepare data frames for genomic initialization
+query_genome <- blast_data %>%
+  dplyr::select(qseqid, qstart, qend) %>%
+  dplyr::rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome <- blast_data %>%
+  dplyr::select(sseqid, sstart, send) %>%
+  dplyr::rename(chr = sseqid, start = sstart, end = send)
+
+query_genome
+sample_genome
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths <- query_genome %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths <- sample_genome %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths <- rbind(query_lengths, sample_lengths)
+
+genome_lengths
+
+genome_lengths$chr = gsub("chromosome0000", "chr", genome_lengths$chr)
+genome_lengths$chr <- gsub("plasmid0000", "p", genome_lengths$chr)
+genome_lengths$chr <- gsub("FS", "", genome_lengths$chr)
+genome_lengths$chr <- gsub("_", " ", genome_lengths$chr)
+genome_lengths$chr <- gsub("1386", "", genome_lengths$chr)
+
+genome_lengths
+
+# Add a dummy numeric column
+genome_lengths$value <- 1
+
+
+# Define colors for specific sequences
+
+colors = c("FC chr1" = "#176082", 
+           "FC p1" = "#08306B",
+           "FC p2" = "#2171B5",
+           "FC chr1 test" = "#176082", 
+           "FC p1 test" = "#08306B",
+           "FC p2 test" = "#2171B5",
+           "FC p3" = "#4292C6",
+           "FC p4" = "#6BAED6",
+           "FC p5" = "#9ECAE1",
+           "FC p6" =  "#C0B0E6",
+           "FC p7" = "#A899CC",
+           "FC p7" = "#9073B3",
+           "BL chr1" = "#C00001",
+           "BL p1" = "#A50F15",
+           "BL p2" = "#CB181D",
+           "BL p3" = "#EF3B2C",
+           "BL p4" = "#FB6A4A",
+           "BL p5" = "#FC9272",
+           "BL p6" = "#FEE0D2",
+           "BL p7" = "#FFEBEE")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 5)
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths, plotType = "axis")
+
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.1, ylim = c(0, 1))
+
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(2, 0.5)
+  )
+}, bg.border = NA)
+
+# Clean up the chromosome and plasmid names in the BLAST data
+blast_data$qseqid <- gsub("chromosome0000", "chr", blast_data$qseqid)
+blast_data$qseqid <- gsub("plasmid0000", "p", blast_data$qseqid)
+blast_data$qseqid <- gsub("FS", "", blast_data$qseqid)
+blast_data$qseqid <- gsub("_", " ", blast_data$qseqid)
+blast_data$qseqid <- gsub("1386", "", blast_data$qseqid)
+
+blast_data$sseqid <- gsub("chromosome0000", "chr", blast_data$sseqid)
+blast_data$sseqid <- gsub("plasmid0000", "p", blast_data$sseqid)
+blast_data$sseqid <- gsub("FS", "", blast_data$sseqid)
+blast_data$sseqid <- gsub("_", " ", blast_data$sseqid)
+blast_data$sseqid <- gsub("1386", "", blast_data$sseqid)
+
+sample_genome$chr <- gsub("chromosome0000", "chr", sample_genome$chr)
+sample_genome$chr <- gsub("plasmid0000", "p", sample_genome$chr)
+sample_genome$chr <- gsub("FS", "", sample_genome$chr)
+sample_genome$chr <- gsub("_", " ", sample_genome$chr)
+sample_genome$chr <- gsub("1386", "", sample_genome$chr)
+
+query_genome$chr <- gsub("chromosome0000", "chr", query_genome$chr)
+query_genome$chr <- gsub("plasmid0000", "p", query_genome$chr)
+query_genome$chr <- gsub("FS", "", query_genome$chr)
+query_genome$chr <- gsub("_", " ", query_genome$chr)
+query_genome$chr <- gsub("1386", "", query_genome$chr)
+
+# Plot the connections from blast_data df with specific colors
+for (i in 1:nrow(blast_data)) {
+  query_seq <- blast_data$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data$qseqid[i], start = blast_data$qstart[i], end = blast_data$qend[i]),
+    region2 = data.frame(chr = blast_data$sseqid[i], start = blast_data$sstart[i], end = blast_data$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+
+# Add a title to the plot with increased text size
+title("1386 FC v FC test", cex.main = 2)
+
+# Plot only one connection
+circos.genomicLink(
+  region1 = data.frame(chr = "FC chr1 test", start = 1, end = 5340663),
+  region2 = data.frame(chr = "FC chr1", start = 1, end = 5340663),
+  col = adjustcolor(color, alpha.f = 0.9))
+
+
+# Plot the connections from query_genome & sample_genome with specific colors
+circos.genomicLink(query_genome, sample_genome, col = rand_color(nrow(query_genome), transparency = 0.5), 
+                   border = NA)
+
+# test connections
+circos.link(sector.index1, 0, sector.index2, 0)
+circos.link(sector.index1, c(0, 1), sector.index2, 0)
+circos.link(sector.index1, c(0, 1), sector.index2, c(1, 2))
+circos.link(sector.index1, c(0, 1), sector.index2, 0, col, lwd, lty, border)
+
+for (i in 1:nrow(blast_data)) {
+  query_seq <- blast_data$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data$qseqid[i], start = blast_data$qstart[i], end = blast_data$qend[i]),
+    region2 = data.frame(chr = blast_data$sseqid[i], start = blast_data$sstart[i], end = blast_data$send[i]),
+    col = adjustcolor(color, alpha.f = 1)
+  )
+}
+
+circos.genomicLink(bed1, bed2, col = rand_color(nrow(bed1), transparency = 0.5), 
+                   border = NA)
+
+circos.genomicLink(query_genome, sample_genome, col = colors, transparency = 0.5), 
+                   border = NA)
+
+
+
+circos.link("chr1", get.cell.meta.data("cell.xlim", sector.index = "chr1"),
+            "zoom_chr1", get.cell.meta.data("cell.xlim", sector.index = "zoom_chr1"),
+            col = color, border = NA)
+
+
+# Add a title to the plot with increased text size
+title("Genome Comparisons Using Circos Plot", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+
+
+
+
+
+
+
+
+
+
+#_______________________________
+
+# > 1386 #######
+#_______________________________
+
+parse_blast <- function(blast_file) {
+  blast_data <- read.table(blast_file, header = FALSE, stringsAsFactors = FALSE)
+  colnames(blast_data) <- c("qseqid", "sseqid", "pident", "length", "mismatch", 
+                            "gapopen", "qstart", "qend", "sstart", "send", 
+                            "evalue", "bitscore")
+  return(blast_data)
+}
+
+blast_data_1386 <- parse_blast("BLAST/FSBL1386_vs_FSFC1386.blastn")
+
+# Prepare data frames for genomic initialization
+query_genome_1386 <- blast_data_1386 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_1386 <- blast_data_1386 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_1386 <- query_genome_1386 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_1386 <- sample_genome_1386 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+
+extra_contigs_1386 <- data.frame(
+  chr = c("FSFC1386_plasmid00002"),
+  start = c(0),
+  end = c(6415)
+)
+
+# Merge the lengths data for circos initialization
+genome_lengths_1386 <- rbind(query_lengths_1386, extra_contigs_1386, sample_lengths_1386)
+
+
+# Check
+genome_lengths_1386
+genome_lengths_1386_OG = genome_lengths_1386
+genome_lengths_1386_OG
+
+unique(blast_data_1386$pident)
+
+
+# Filter percentage identity to be only 100 and above the length of the shortest contig length 
+
+# blast_data_1386 = blast_data_1386 %>% filter(pident >= 98 & length > min(genome_lengths_1386$end))
+
+# blast_data_1386 = blast_data_1386 %>% filter(pident >= 99.5 & length > 0.9*(min(genome_lengths_1386$end)))
+
+# blast_data_1386 = blast_data_1386 %>% filter(pident >= 99.5 & length >= 5000)
+
+# blast_data_1386 = blast_data_1386 %>% filter(pident >= 99.9 & length >= 2000)
+
+blast_data_1386 = blast_data_1386 %>% filter(pident >= 99.9 & length >= 2000)
+
+# check 
+blast_data_1386
+unique(blast_data_1386$pident)
+unique(blast_data_1386$length)
+
+# Prepare data frames for genomic initialization
+query_genome_1386 <- blast_data_1386 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_1386 <- blast_data_1386 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_1386 <- query_genome_1386 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_1386 <- sample_genome_1386 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+
+extra_contigs_1386 <- data.frame(
+  chr = c("FSFC1386_plasmid00002"),
+  start = c(0),
+  end = c(6415)
+)
+
+# Merge the lengths data for circos initialization
+genome_lengths_1386_new <- rbind(query_lengths_1386, extra_contigs_1386, sample_lengths_1386)
+
+genome_lengths_1386_OG
+genome_lengths_1386_new
+
+unique(blast_data_1386$pident)
+
+genome_lengths_1386_OG$chr = gsub("chromosome0000", "chr", genome_lengths_1386_OG$chr)
+genome_lengths_1386_OG$chr <- gsub("plasmid0000", "p", genome_lengths_1386_OG$chr)
+genome_lengths_1386_OG$chr <- gsub("FS", "", genome_lengths_1386_OG$chr)
+genome_lengths_1386_OG$chr <- gsub("_", " ", genome_lengths_1386_OG$chr)
+genome_lengths_1386_OG$chr <- gsub("1386", "", genome_lengths_1386_OG$chr)
+
+genome_lengths_1386_OG
+
+# Add a dummy numeric column
+genome_lengths_1386_OG$value <- 1
+
+
+# Define colors for specific sequences
+colors <- c("FC chr1" = "#176082", "FC p1" = "#08306B")
+
+colors = c("FC chr1" = "#176082", 
+           "FC p1" = "#08306B",
+           "FC p2" = "#2171B5",
+           "FC p3" = "#4292C6",
+           "FC p4" = "#6BAED6",
+           "FC p5" = "#9ECAE1",
+           "FC p6" =  "#C0B0E6",
+           "FC p7" = "#A899CC",
+           "FC p7" = "#9073B3",
+           "BL chr1" = "#C00001",
+           "BL p1" = "#A50F15",
+           "BL p2" = "#CB181D",
+           "BL p3" = "#EF3B2C",
+           "BL p4" = "#FB6A4A",
+           "BL p5" = "#FC9272",
+           "BL p6" = "#FEE0D2",
+           "BL p7" = "#FFEBEE")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 5)
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_1386_OG, plotType = "axis")
+
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_1386_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.1, ylim = c(0, 1))
+
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(2, 0.5)
+  )
+}, bg.border = NA)
+
+# Clean up the chromosome and plasmid names in the BLAST data
+blast_data_1386$qseqid <- gsub("chromosome0000", "chr", blast_data_1386$qseqid)
+blast_data_1386$qseqid <- gsub("plasmid0000", "p", blast_data_1386$qseqid)
+blast_data_1386$qseqid <- gsub("FS", "", blast_data_1386$qseqid)
+blast_data_1386$qseqid <- gsub("_", " ", blast_data_1386$qseqid)
+blast_data_1386$qseqid <- gsub("1386", "", blast_data_1386$qseqid)
+
+blast_data_1386$sseqid <- gsub("chromosome0000", "chr", blast_data_1386$sseqid)
+blast_data_1386$sseqid <- gsub("plasmid0000", "p", blast_data_1386$sseqid)
+blast_data_1386$sseqid <- gsub("FS", "", blast_data_1386$sseqid)
+blast_data_1386$sseqid <- gsub("_", " ", blast_data_1386$sseqid)
+blast_data_1386$sseqid <- gsub("1386", "", blast_data_1386$sseqid)
+
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_1386)) {
+  query_seq <- blast_data_1386$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_1386$qseqid[i], start = blast_data_1386$qstart[i], end = blast_data_1386$qend[i]),
+    region2 = data.frame(chr = blast_data_1386$sseqid[i], start = blast_data_1386$sstart[i], end = blast_data_1386$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("1386", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "FSFC1386_vs_FSBL1386_circos.genomicInitialize_plot_ID>=99.9_L>=2kb.png"
+
+png(IMAGE.NAME, 
+    width = 450, 
+    height = 400, 
+    res = 400, 
+    units = "mm")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 6,
+           track.margin = c(0.005, 0.005), 
+           cell.padding = c(0.003, 0.003, 0.003, 0.003))
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_1386_OG, 
+                         plotType = "axis",
+                         axis.labels.cex = 1)
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_1386_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.05, ylim = c(0, 1))
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    cex = 1.75,
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(1.7, 0.5)
+  )
+}, bg.border = NA)
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_1386)) {
+  query_seq <- blast_data_1386$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_1386$qseqid[i], start = blast_data_1386$qstart[i], end = blast_data_1386$qend[i]),
+    region2 = data.frame(chr = blast_data_1386$sseqid[i], start = blast_data_1386$sstart[i], end = blast_data_1386$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("1386", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+# 3. Close the file
+dev.off()
+#
+# saved as png #_____________________________________________________________________________
+
+
+#_______________________________
+
+# > 1448 long read Tester #######
+#_______________________________
+
+parse_blast <- function(blast_file) {
+  blast_data <- read.table(blast_file, header = FALSE, stringsAsFactors = FALSE)
+  colnames(blast_data) <- c("qseqid", "sseqid", "pident", "length", "mismatch", 
+                            "gapopen", "qstart", "qend", "sstart", "send", 
+                            "evalue", "bitscore")
+  return(blast_data)
+}
+
+blast_data_1448 <- parse_blast("BLAST/longread/FSBL1448_vs_FSFC1448.blastn")
+
+# Prepare data frames for genomic initialization
+query_genome_1448 <- blast_data_1448 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_1448 <- blast_data_1448 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_1448 <- query_genome_1448 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_1448 <- sample_genome_1448 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_1448 <- rbind(query_lengths_1448, sample_lengths_1448)
+
+# genome_lengths_1448[3,3] = 188961
+
+# Check
+genome_lengths_1448
+genome_lengths_1448_OG = genome_lengths_1448
+
+# Look for unique percentage identity 
+unique(blast_data_1448$pident)
+unique(blast_data_1448$length)
+
+# Filter percentage identity to be only 100 and above the length of the shortest contig length 
+
+# blast_data_1448 = blast_data_1448 %>% filter(pident >= 99.5 & length > min(genome_lengths_1448$end))
+
+blast_data_1448 = blast_data_1448 %>% filter(pident >= 99.9 & length >= 2000)
+
+# blast_data_1448 = blast_data_1448 %>% filter(pident >= 99.5 & length >= 5000)
+
+# check 
+blast_data_1448
+unique(blast_data_1448$pident)
+unique(blast_data_1448$length)
+
+# Prepare data frames for genomic initialization
+query_genome_1448 <- blast_data_1448 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_1448 <- blast_data_1448 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_1448 <- query_genome_1448 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_1448 <- sample_genome_1448 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_1448_new <- rbind(query_lengths_1448, sample_lengths_1448)
+
+# Check
+genome_lengths_1448_new
+genome_lengths_1448_OG
+
+blast_data_1448
+
+# Rename contigs
+genome_lengths_1448_OG$chr = gsub("chromosome0000", "chr", genome_lengths_1448_OG$chr)
+genome_lengths_1448_OG$chr <- gsub("plasmid0000", "p", genome_lengths_1448_OG$chr)
+genome_lengths_1448_OG$chr <- gsub("FS", "", genome_lengths_1448_OG$chr)
+genome_lengths_1448_OG$chr <- gsub("_", " ", genome_lengths_1448_OG$chr)
+genome_lengths_1448_OG$chr <- gsub("1448", "", genome_lengths_1448_OG$chr)
+
+
+genome_lengths_1448$chr = gsub("chromosome0000", "chr", genome_lengths_1448$chr)
+genome_lengths_1448$chr <- gsub("plasmid0000", "p", genome_lengths_1448$chr)
+genome_lengths_1448$chr <- gsub("FS", "", genome_lengths_1448$chr)
+genome_lengths_1448$chr <- gsub("_", " ", genome_lengths_1448$chr)
+genome_lengths_1448$chr <- gsub("1448", "", genome_lengths_1448$chr)
+
+genome_lengths_1448_OG
+genome_lengths_1448
+blast_data_1448
+
+# Add a dummy numeric column
+genome_lengths_1448_OG$value <- 1
+
+# Define colors for specific sequences
+colors <- c("FC chr1" = "#176082", "FC p1" = "#08306B")
+
+colors = c("FC chr1" = "#176082", 
+           "FC p1" = "#08306B",
+           "FC p2" = "#2171B5",
+           "FC p3" = "#4292C6",
+           "FC p4" = "#6BAED6",
+           "FC p5" = "#9ECAE1",
+           "FC p6" =  "#C0B0E6",
+           "FC p7" = "#A899CC",
+           "FC p7" = "#9073B3",
+           "BL chr1" = "#C00001",
+           "BL p1" = "#A50F15",
+           "BL p2" = "#CB181D",
+           "BL p3" = "#EF3B2C",
+           "BL p4" = "#FB6A4A",
+           "BL p5" = "#FC9272",
+           "BL p6" = "#FEE0D2",
+           "BL p7" = "#FFEBEE")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 5)
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_1448, plotType = "axis")
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_1448, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.1, ylim = c(0, 1))
+
+# Add custom sector labels with bending.outside rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(2, 0.5)
+  )
+}, bg.border = NA)
+
+# Clean up the chromosome and plasmid names in the BLAST data
+blast_data_1448$qseqid <- gsub("chromosome0000", "chr", blast_data_1448$qseqid)
+blast_data_1448$qseqid <- gsub("plasmid0000", "p", blast_data_1448$qseqid)
+blast_data_1448$qseqid <- gsub("FS", "", blast_data_1448$qseqid)
+blast_data_1448$qseqid <- gsub("_", " ", blast_data_1448$qseqid)
+blast_data_1448$qseqid <- gsub("1448", "", blast_data_1448$qseqid)
+
+blast_data_1448$sseqid <- gsub("chromosome0000", "chr", blast_data_1448$sseqid)
+blast_data_1448$sseqid <- gsub("plasmid0000", "p", blast_data_1448$sseqid)
+blast_data_1448$sseqid <- gsub("FS", "", blast_data_1448$sseqid)
+blast_data_1448$sseqid <- gsub("_", " ", blast_data_1448$sseqid)
+blast_data_1448$sseqid <- gsub("1448", "", blast_data_1448$sseqid)
+
+genome_lengths_1448_OG
+blast_data_1448
+
+# Ensure coordinates are within bounds
+blast_data_1448 <- blast_data_1448 %>%
+  filter(qend <= genome_lengths_1448_OG$end[match(qseqid, genome_lengths_1448_OG$chr)] &
+           send <= genome_lengths_1448_OG$end[match(sseqid, genome_lengths_1448_OG$chr)])
+
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_1448)) {
+  query_seq <- blast_data_1448$qseqid[i]
+  color <- colors[query_seq]
+  
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_1448$qseqid[i], start = blast_data_1448$qstart[i], end = blast_data_1448$qend[i]),
+    region2 = data.frame(chr = blast_data_1448$sseqid[i], start = blast_data_1448$sstart[i], end = blast_data_1448$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("1448", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+
+#_______________________________
+
+# > 1448 long read #######
+#_______________________________
+
+parse_blast <- function(blast_file) {
+  blast_data <- read.table(blast_file, header = FALSE, stringsAsFactors = FALSE)
+  colnames(blast_data) <- c("qseqid", "sseqid", "pident", "length", "mismatch", 
+                            "gapopen", "qstart", "qend", "sstart", "send", 
+                            "evalue", "bitscore")
+  return(blast_data)
+}
+
+blast_data_1448 <- parse_blast("BLAST/longread/FSBL1448_vs_FSFC1448.blastn")
+
+# Prepare data frames for genomic initialization
+query_genome_1448 <- blast_data_1448 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_1448 <- blast_data_1448 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_1448 <- query_genome_1448 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_1448 <- sample_genome_1448 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_1448 <- rbind(query_lengths_1448, sample_lengths_1448)
+
+genome_lengths_1448
+
+# genome_lengths_1448[3,3] = 188961
+
+# Check against seqkit lengths and adjust as necessary
+
+# FC chr1 
+genome_lengths_1448[7,3] = 5328480
+# FC p2
+genome_lengths_1448[9,3] = 212329
+# FC p4
+genome_lengths_1448[11,3] = 10122
+
+#check
+genome_lengths_1448
+genome_lengths_1448_OG = genome_lengths_1448
+
+# Look for unique percentage idenitity 
+unique(blast_data_1448$pident)
+unique(blast_data_1448$length)
+
+# Filter percentage identity to be only 100 and above the length of the shortest contig length 
+
+# blast_data_1448 = blast_data_1448 %>% filter(pident >= 99.5 & length > min(genome_lengths_1448$end))
+
+blast_data_1448 = blast_data_1448 %>% filter(pident >= 99.9 & length >= 2000)
+
+# blast_data_1448 = blast_data_1448 %>% filter(pident >= 99.5 & length >= 5000)
+
+# check 
+blast_data_1448
+unique(blast_data_1448$pident)
+unique(blast_data_1448$length)
+
+# Prepare data frames for genomic initialization
+query_genome_1448 <- blast_data_1448 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_1448 <- blast_data_1448 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_1448 <- query_genome_1448 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_1448 <- sample_genome_1448 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_1448_new <- rbind(query_lengths_1448, sample_lengths_1448)
+
+# Check
+genome_lengths_1448_new
+genome_lengths_1448_OG
+
+
+
+# Rename contigs
+genome_lengths_1448_OG$chr = gsub("chromosome0000", "chr", genome_lengths_1448_OG$chr)
+genome_lengths_1448_OG$chr <- gsub("plasmid0000", "p", genome_lengths_1448_OG$chr)
+genome_lengths_1448_OG$chr <- gsub("FS", "", genome_lengths_1448_OG$chr)
+genome_lengths_1448_OG$chr <- gsub("_", " ", genome_lengths_1448_OG$chr)
+genome_lengths_1448_OG$chr <- gsub("1448", "", genome_lengths_1448_OG$chr)
+
+genome_lengths_1448_OG
+
+# Add a dummy numeric column
+genome_lengths_1448_OG$value <- 1
+
+
+# Define colors for specific sequences
+colors <- c("FC chr1" = "#176082", "FC p1" = "#08306B")
+
+colors = c("FC chr1" = "#176082", 
+           "FC p1" = "#08306B",
+           "FC p2" = "#2171B5",
+           "FC p3" = "#4292C6",
+           "FC p4" = "#6BAED6",
+           "FC p5" = "#9ECAE1",
+           "FC p6" =  "#C0B0E6",
+           "FC p7" = "#A899CC",
+           "FC p7" = "#9073B3",
+           "BL chr1" = "#C00001",
+           "BL p1" = "#A50F15",
+           "BL p2" = "#CB181D",
+           "BL p3" = "#EF3B2C",
+           "BL p4" = "#FB6A4A",
+           "BL p5" = "#FC9272",
+           "BL p6" = "#FEE0D2",
+           "BL p7" = "#FFEBEE")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 5)
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_1448_OG, plotType = "axis")
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_1448_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.1, ylim = c(0, 1))
+
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(2, 0.5)
+  )
+}, bg.border = NA)
+
+# Clean up the chromosome and plasmid names in the BLAST data
+blast_data_1448$qseqid <- gsub("chromosome0000", "chr", blast_data_1448$qseqid)
+blast_data_1448$qseqid <- gsub("plasmid0000", "p", blast_data_1448$qseqid)
+blast_data_1448$qseqid <- gsub("FS", "", blast_data_1448$qseqid)
+blast_data_1448$qseqid <- gsub("_", " ", blast_data_1448$qseqid)
+blast_data_1448$qseqid <- gsub("1448", "", blast_data_1448$qseqid)
+
+blast_data_1448$sseqid <- gsub("chromosome0000", "chr", blast_data_1448$sseqid)
+blast_data_1448$sseqid <- gsub("plasmid0000", "p", blast_data_1448$sseqid)
+blast_data_1448$sseqid <- gsub("FS", "", blast_data_1448$sseqid)
+blast_data_1448$sseqid <- gsub("_", " ", blast_data_1448$sseqid)
+blast_data_1448$sseqid <- gsub("1448", "", blast_data_1448$sseqid)
+
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_1448)) {
+  query_seq <- blast_data_1448$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_1448$qseqid[i], start = blast_data_1448$qstart[i], end = blast_data_1448$qend[i]),
+    region2 = data.frame(chr = blast_data_1448$sseqid[i], start = blast_data_1448$sstart[i], end = blast_data_1448$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("1448", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "FSFC1448_vs_FSBL1448_circos.genomicInitialize_plot_ID>=99.9_L>=5kb.png"
+
+png(IMAGE.NAME, 
+    width = 450, 
+    height = 400, 
+    res = 400, 
+    units = "mm")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 6,
+           track.margin = c(0.005, 0.005), 
+           cell.padding = c(0.003, 0.003, 0.003, 0.003))
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_1448_OG, 
+                         plotType = "axis",
+                         axis.labels.cex = 1)
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_1448_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.05, ylim = c(0, 1))
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    cex = 1.75,
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(1.7, 0.5)
+  )
+}, bg.border = NA)
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_1448)) {
+  query_seq <- blast_data_1448$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_1448$qseqid[i], start = blast_data_1448$qstart[i], end = blast_data_1448$qend[i]),
+    region2 = data.frame(chr = blast_data_1448$sseqid[i], start = blast_data_1448$sstart[i], end = blast_data_1448$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("1448", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+# 3. Close the file
+dev.off()
+#
+# saved as png #_____________________________________________________________________________
+
+1448
+
+#_______________________________
+
+# > 1654 #######
+#_______________________________
+
+parse_blast <- function(blast_file) {
+  blast_data <- read.table(blast_file, header = FALSE, stringsAsFactors = FALSE)
+  colnames(blast_data) <- c("qseqid", "sseqid", "pident", "length", "mismatch", 
+                            "gapopen", "qstart", "qend", "sstart", "send", 
+                            "evalue", "bitscore")
+  return(blast_data)
+}
+
+blast_data_1654 <- parse_blast("BLAST/FSBL1654_vs_FSFC1654.blastn")
+
+unique(blast_data_1654$sseqid)
+
+blast_data_1654 <- blast_data_1654 %>%
+  mutate(sseqid = paste0("c", sseqid))
+
+
+unique(blast_data_1654$sseqid)
+unique(blast_data_1654$qseqid)
+
+# Prepare data frames for genomic initialization
+query_genome_1654 <- blast_data_1654 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_1654 <- blast_data_1654 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_1654 <- query_genome_1654 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_1654 <- sample_genome_1654 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_1654 <- rbind(query_lengths_1654, sample_lengths_1654)
+
+#check
+genome_lengths_1654
+
+# FC chr1
+# genome_lengths_1654[5,3] = 5052997
+
+
+genome_lengths_1654_OG = genome_lengths_1654
+genome_lengths_1654_OG
+
+# Look for unique percentage idenitity 
+unique(blast_data_1654$pident)
+
+# Filter percentage identity to be only 100 and above the length of the shortest contig length 
+
+# blast_data_1654 = blast_data_1654 %>% filter(pident >= 99.5 & length > 0.9*(min(genome_lengths_1654$end)))
+
+# blast_data_1654 = blast_data_1654 %>% filter(pident >= 99.5 & length > 5000
+
+# blast_data_1654 = blast_data_1654 %>% filter(pident >= 99.5 & length > min(genome_lengths_1654$end))
+
+# blast_data_1654 = blast_data_1654 %>% filter(pident >= 99.5 & length >= 2000)
+
+blast_data_1654 = blast_data_1654 %>% filter(pident >= 99.9)
+
+# check 
+blast_data_1654
+unique(blast_data_1654$pident)
+unique(blast_data_1654$length)
+
+
+
+# Prepare data frames for genomic initialization
+query_genome_1654 <- blast_data_1654 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_1654 <- blast_data_1654 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_1654 <- query_genome_1654 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_1654 <- sample_genome_1654 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_1654_new <- rbind(query_lengths_1654, sample_lengths_1654)
+
+# Check
+genome_lengths_1654_new
+genome_lengths_1654_OG
+
+# Rename contigs
+genome_lengths_1654_OG$chr = gsub("chromosome0000", "chr", genome_lengths_1654_OG$chr)
+genome_lengths_1654_OG$chr <- gsub("plasmid0000", "p", genome_lengths_1654_OG$chr)
+genome_lengths_1654_OG$chr <- gsub("plasmid000", "p", genome_lengths_1654_OG$chr)
+genome_lengths_1654_OG$chr <- gsub("FS", "", genome_lengths_1654_OG$chr)
+genome_lengths_1654_OG$chr <- gsub("_", " ", genome_lengths_1654_OG$chr)
+genome_lengths_1654_OG$chr <- gsub("1654", "", genome_lengths_1654_OG$chr)
+
+genome_lengths_1654_OG
+
+class(genome_lengths_1654_OG)
+
+# Add a dummy numeric column
+genome_lengths_1654_OG$value <- 1
+
+blast_data_1654$qseqid <- gsub("chromosome0000", "chr", blast_data_1654$qseqid)
+blast_data_1654$qseqid <- gsub("plasmid0000", "p", blast_data_1654$qseqid)
+blast_data_1654$qseqid <- gsub("plasmid000", "p", blast_data_1654$qseqid)
+blast_data_1654$qseqid <- gsub("FS", "", blast_data_1654$qseqid)
+blast_data_1654$qseqid <- gsub("_", " ", blast_data_1654$qseqid)
+blast_data_1654$qseqid <- gsub("1654", "", blast_data_1654$qseqid)
+
+blast_data_1654$sseqid <- gsub("chromosome0000", "chr", blast_data_1654$sseqid)
+blast_data_1654$sseqid <- gsub("plasmid0000", "p", blast_data_1654$sseqid)
+blast_data_1654$sseqid <- gsub("plasmid000", "p", blast_data_1654$sseqid)
+blast_data_1654$sseqid <- gsub("FS", "", blast_data_1654$sseqid)
+blast_data_1654$sseqid <- gsub("_", " ", blast_data_1654$sseqid)
+blast_data_1654$sseqid <- gsub("1654", "", blast_data_1654$sseqid)
+
+unique(blast_data_1654$sseqid)
+unique(blast_data_1654$qseqid)
+
+unique_sseqid <- unique(blast_data_1654$sseqid)
+unique_qseqid <- unique(blast_data_1654$qseqid)
+
+# Generate color palettes
+sseqid_colors <- setNames(colorRampPalette(c("#176082", "#82aaff"))(length(unique_sseqid)), unique_sseqid)
+qseqid_colors <- setNames(colorRampPalette(c("#C00001", "#ff8282"))(length(unique_qseqid)), unique_qseqid)
+
+colors <- c(sseqid_colors, qseqid_colors)
+
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 5)
+
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_1654_OG, plotType = "axis")
+
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_1654_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.1, ylim = c(0, 1))
+
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(2, 0.5)
+  )
+}, bg.border = NA)
+
+# Clean up the chromosome and plasmid names in the BLAST data
+blast_data_1654$qseqid <- gsub("chromosome0000", "chr", blast_data_1654$qseqid)
+blast_data_1654$qseqid <- gsub("plasmid0000", "p", blast_data_1654$qseqid)
+blast_data_1654$qseqid <- gsub("plasmid000", "p", blast_data_1654$qseqid)
+blast_data_1654$qseqid <- gsub("FS", "", blast_data_1654$qseqid)
+blast_data_1654$qseqid <- gsub("_", " ", blast_data_1654$qseqid)
+blast_data_1654$qseqid <- gsub("1654", "", blast_data_1654$qseqid)
+
+blast_data_1654$sseqid <- gsub("chromosome0000", "chr", blast_data_1654$sseqid)
+blast_data_1654$sseqid <- gsub("plasmid0000", "p", blast_data_1654$sseqid)
+blast_data_1654$sseqid <- gsub("plasmid000", "p", blast_data_1654$sseqid)
+blast_data_1654$sseqid <- gsub("FS", "", blast_data_1654$sseqid)
+blast_data_1654$sseqid <- gsub("_", " ", blast_data_1654$sseqid)
+blast_data_1654$sseqid <- gsub("1654", "", blast_data_1654$sseqid)
+
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_1654)) {
+  query_seq <- blast_data_1654$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_1654$qseqid[i], start = blast_data_1654$qstart[i], end = blast_data_1654$qend[i]),
+    region2 = data.frame(chr = blast_data_1654$sseqid[i], start = blast_data_1654$sstart[i], end = blast_data_1654$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("1654", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+
+library(dplyr)
+library(stringr)
+
+
+# Find specific contigs that align below 99.9%
+
+filtered_df <- blast_data_1654 %>%
+  filter(str_detect(blast_data_1654$sseqid, "c18"))
+
+filtered_df$pident
+
+sum(filtered_df$length)
+
+
+# Cut out very small contigs by plotting  
+###__________________________
+
+# Rename contigs
+genome_lengths_1654_new$chr = gsub("chromosome0000", "chr", genome_lengths_1654_new$chr)
+genome_lengths_1654_new$chr <- gsub("plasmid0000", "p", genome_lengths_1654_new$chr)
+genome_lengths_1654_new$chr <- gsub("plasmid000", "p", genome_lengths_1654_new$chr)
+genome_lengths_1654_new$chr <- gsub("FS", "", genome_lengths_1654_new$chr)
+genome_lengths_1654_new$chr <- gsub("_", " ", genome_lengths_1654_new$chr)
+genome_lengths_1654_new$chr <- gsub("1654", "", genome_lengths_1654_new$chr)
+
+genome_lengths_1654_new
+
+class(genome_lengths_1654_new)
+
+# Add a dummy numeric column
+genome_lengths_1654_new$value <- 1
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_1654_new, plotType = "axis")
+
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 5)
+
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_1654_new, plotType = "axis")
+
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_1654_new, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.1, ylim = c(0, 1))
+
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(2, 0.5)
+  )
+}, bg.border = NA)
+
+
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_1654)) {
+  query_seq <- blast_data_1654$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_1654$qseqid[i], start = blast_data_1654$qstart[i], end = blast_data_1654$qend[i]),
+    region2 = data.frame(chr = blast_data_1654$sseqid[i], start = blast_data_1654$sstart[i], end = blast_data_1654$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("1654", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+#  
+###__________________________
+
+#1654
+#1654
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "FSFC1654_vs_FSBL1654_circos.genomicInitialize_plot_ID>=99.9.png"
+
+png(IMAGE.NAME, 
+    width = 450, 
+    height = 400, 
+    res = 400, 
+    units = "mm")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 6,
+           track.margin = c(0.005, 0.005), 
+           cell.padding = c(0.003, 0.003, 0.003, 0.003))
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_1654_OG, 
+                         plotType = "axis",
+                         axis.labels.cex = 1)
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_1654_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.05, ylim = c(0, 1))
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    cex = 1.75,
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(1.7, 0.5)
+  )
+}, bg.border = NA)
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_1654)) {
+  query_seq <- blast_data_1654$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_1654$qseqid[i], start = blast_data_1654$qstart[i], end = blast_data_1654$qend[i]),
+    region2 = data.frame(chr = blast_data_1654$sseqid[i], start = blast_data_1654$sstart[i], end = blast_data_1654$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("1654", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+# 3. Close the file
+dev.off()
+#
+# saved as png #_____________________________________________________________________________
+
+1654
+
+
+
+#_______________________________
+
+# > 2071 #######
+#_______________________________
+
+parse_blast <- function(blast_file) {
+  blast_data <- read.table(blast_file, header = FALSE, stringsAsFactors = FALSE)
+  colnames(blast_data) <- c("qseqid", "sseqid", "pident", "length", "mismatch", 
+                            "gapopen", "qstart", "qend", "sstart", "send", 
+                            "evalue", "bitscore")
+  return(blast_data)
+}
+
+blast_data_2071 <- parse_blast("BLAST/FSBL2071_vs_FSFC2071.blastn")
+
+# Prepare data frames for genomic initialization
+query_genome_2071 <- blast_data_2071 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_2071 <- blast_data_2071 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_2071 <- query_genome_2071 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_2071 <- sample_genome_2071 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_2071 <- rbind(query_lengths_2071, sample_lengths_2071)
+
+#check
+genome_lengths_2071
+
+# FC chr1
+genome_lengths_2071[5,3] = 5052997
+
+
+genome_lengths_2071_OG = genome_lengths_2071
+genome_lengths_2071_OG
+
+# Look for unique percentage idenitity 
+unique(blast_data_2071$pident)
+
+# Filter percentage identity to be only 100 and above the length of the shortest contig length 
+
+# blast_data_2071 = blast_data_2071 %>% filter(pident >= 99.5 & length > 0.9*(min(genome_lengths_2071$end)))
+
+# blast_data_2071 = blast_data_2071 %>% filter(pident >= 99.5 & length > 5000
+
+# blast_data_2071 = blast_data_2071 %>% filter(pident >= 99.5 & length > min(genome_lengths_2071$end))
+
+# blast_data_2071 = blast_data_2071 %>% filter(pident >= 99.5 & length >= 2000)
+
+blast_data_2071 = blast_data_2071 %>% filter(pident >= 99.9 & length >= 2000)
+
+# check 
+blast_data_2071
+unique(blast_data_2071$pident)
+unique(blast_data_2071$length)
+
+# Prepare data frames for genomic initialization
+query_genome_2071 <- blast_data_2071 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_2071 <- blast_data_2071 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_2071 <- query_genome_2071 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_2071 <- sample_genome_2071 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_2071_new <- rbind(query_lengths_2071, sample_lengths_2071)
+
+# Check
+genome_lengths_2071_new
+genome_lengths_2071_OG
+
+
+
+# Rename contigs
+genome_lengths_2071_OG$chr = gsub("chromosome0000", "chr", genome_lengths_2071_OG$chr)
+genome_lengths_2071_OG$chr <- gsub("plasmid0000", "p", genome_lengths_2071_OG$chr)
+genome_lengths_2071_OG$chr <- gsub("FS", "", genome_lengths_2071_OG$chr)
+genome_lengths_2071_OG$chr <- gsub("_", " ", genome_lengths_2071_OG$chr)
+genome_lengths_2071_OG$chr <- gsub("2071", "", genome_lengths_2071_OG$chr)
+
+genome_lengths_2071_OG
+
+# Add a dummy numeric column
+genome_lengths_2071_OG$value <- 1
+
+
+# Define colors for specific sequences
+colors <- c("FC chr1" = "#176082", "FC p1" = "#08306B")
+
+colors = c("FC chr1" = "#176082", 
+           "FC p1" = "#08306B",
+           "FC p2" = "#2171B5",
+           "FC p3" = "#4292C6",
+           "FC p4" = "#6BAED6",
+           "FC p5" = "#9ECAE1",
+           "FC p6" =  "#C0B0E6",
+           "FC p7" = "#A899CC",
+           "FC p7" = "#9073B3",
+           "BL chr1" = "#C00001",
+           "BL p1" = "#A50F15",
+           "BL p2" = "#CB181D",
+           "BL p3" = "#EF3B2C",
+           "BL p4" = "#FB6A4A",
+           "BL p5" = "#FC9272",
+           "BL p6" = "#FEE0D2",
+           "BL p7" = "#FFEBEE")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 5)
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_2071_OG, plotType = "axis")
+
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_2071_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.1, ylim = c(0, 1))
+
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(2, 0.5)
+  )
+}, bg.border = NA)
+
+# Clean up the chromosome and plasmid names in the BLAST data
+blast_data_2071$qseqid <- gsub("chromosome0000", "chr", blast_data_2071$qseqid)
+blast_data_2071$qseqid <- gsub("plasmid0000", "p", blast_data_2071$qseqid)
+blast_data_2071$qseqid <- gsub("FS", "", blast_data_2071$qseqid)
+blast_data_2071$qseqid <- gsub("_", " ", blast_data_2071$qseqid)
+blast_data_2071$qseqid <- gsub("2071", "", blast_data_2071$qseqid)
+
+blast_data_2071$sseqid <- gsub("chromosome0000", "chr", blast_data_2071$sseqid)
+blast_data_2071$sseqid <- gsub("plasmid0000", "p", blast_data_2071$sseqid)
+blast_data_2071$sseqid <- gsub("FS", "", blast_data_2071$sseqid)
+blast_data_2071$sseqid <- gsub("_", " ", blast_data_2071$sseqid)
+blast_data_2071$sseqid <- gsub("2071", "", blast_data_2071$sseqid)
+
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_2071)) {
+  query_seq <- blast_data_2071$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_2071$qseqid[i], start = blast_data_2071$qstart[i], end = blast_data_2071$qend[i]),
+    region2 = data.frame(chr = blast_data_2071$sseqid[i], start = blast_data_2071$sstart[i], end = blast_data_2071$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("2071", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+
+#2071
+#2071
+
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "FSFC2071_vs_FSBL2071_circos.genomicInitialize_plot_ID>=99.9_L>=2kb.png"
+
+png(IMAGE.NAME, 
+    width = 450, 
+    height = 400, 
+    res = 400, 
+    units = "mm")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 6,
+           track.margin = c(0.005, 0.005), 
+           cell.padding = c(0.003, 0.003, 0.003, 0.003))
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_2071_OG, 
+                         plotType = "axis",
+                         axis.labels.cex = 1)
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_2071_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.05, ylim = c(0, 1))
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    cex = 1.75,
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(1.7, 0.5)
+  )
+}, bg.border = NA)
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_2071)) {
+  query_seq <- blast_data_2071$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_2071$qseqid[i], start = blast_data_2071$qstart[i], end = blast_data_2071$qend[i]),
+    region2 = data.frame(chr = blast_data_2071$sseqid[i], start = blast_data_2071$sstart[i], end = blast_data_2071$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("2071", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+# 3. Close the file
+dev.off()
+#
+# saved as png #_____________________________________________________________________________
+
+2071
+
+
+#_______________________________
+
+# > 2112 #######
+#_______________________________
+
+parse_blast <- function(blast_file) {
+  blast_data <- read.table(blast_file, header = FALSE, stringsAsFactors = FALSE)
+  colnames(blast_data) <- c("qseqid", "sseqid", "pident", "length", "mismatch", 
+                            "gapopen", "qstart", "qend", "sstart", "send", 
+                            "evalue", "bitscore")
+  return(blast_data)
+}
+
+blast_data_2112 <- parse_blast("BLAST/FSBL2112_vs_FSFC2112.blastn")
+
+# Prepare data frames for genomic initialization
+query_genome_2112 <- blast_data_2112 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_2112 <- blast_data_2112 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_2112 <- query_genome_2112 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_2112 <- sample_genome_2112 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_2112 <- rbind(query_lengths_2112, sample_lengths_2112)
+
+genome_lengths_2112
+
+# FC p2
+genome_lengths_2112[7,3] = 4014
+
+#check
+genome_lengths_2112
+genome_lengths_2112_OG = genome_lengths_2112
+
+# Look for unique percentage idenitity 
+unique(blast_data_2112$pident)
+
+# Filter percentage identity to be only 100 and above the length of the shortest contig length 
+
+
+# blast_data_2112 = blast_data_2112 %>% filter(pident >= 99.5 & length > 0.9*(min(genome_lengths_2112$end)))
+
+# blast_data_2112 = blast_data_2112 %>% filter(pident >= 99.5 & length > 5000)
+
+# blast_data_2112 = blast_data_2112 %>% filter(pident >= 99.5 & length > min(genome_lengths_2112$end))
+
+blast_data_2112 = blast_data_2112 %>% filter(pident >= 99.9 & length >= 2000)
+
+# check 
+blast_data_2112
+unique(blast_data_2112$pident)
+unique(blast_data_2112$length)
+
+# Prepare data frames for genomic initialization
+query_genome_2112 <- blast_data_2112 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_2112 <- blast_data_2112 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_2112 <- query_genome_2112 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_2112 <- sample_genome_2112 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_2112_new <- rbind(query_lengths_2112, sample_lengths_2112)
+
+# Check
+genome_lengths_2112_new
+genome_lengths_2112_OG
+
+
+
+# Rename contigs
+genome_lengths_2112_OG$chr = gsub("chromosome0000", "chr", genome_lengths_2112_OG$chr)
+genome_lengths_2112_OG$chr <- gsub("plasmid0000", "p", genome_lengths_2112_OG$chr)
+genome_lengths_2112_OG$chr <- gsub("FS", "", genome_lengths_2112_OG$chr)
+genome_lengths_2112_OG$chr <- gsub("_", " ", genome_lengths_2112_OG$chr)
+genome_lengths_2112_OG$chr <- gsub("2112", "", genome_lengths_2112_OG$chr)
+
+genome_lengths_2112_OG
+
+# Add a dummy numeric column
+genome_lengths_2112_OG$value <- 1
+
+
+# Define colors for specific sequences
+colors <- c("FC chr1" = "#176082", "FC p1" = "#08306B")
+
+colors = c("FC chr1" = "#176082", 
+           "FC p1" = "#08306B",
+           "FC p2" = "#2171B5",
+           "FC p3" = "#4292C6",
+           "FC p4" = "#6BAED6",
+           "FC p5" = "#9ECAE1",
+           "FC p6" =  "#C0B0E6",
+           "FC p7" = "#A899CC",
+           "FC p7" = "#9073B3",
+           "BL chr1" = "#C00001",
+           "BL p1" = "#A50F15",
+           "BL p2" = "#CB181D",
+           "BL p3" = "#EF3B2C",
+           "BL p4" = "#FB6A4A",
+           "BL p5" = "#FC9272",
+           "BL p6" = "#FEE0D2",
+           "BL p7" = "#FFEBEE")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 5)
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_2112_OG, plotType = "axis")
+
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_2112_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.1, ylim = c(0, 1))
+
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(2, 0.5)
+  )
+}, bg.border = NA)
+
+# Clean up the chromosome and plasmid names in the BLAST data
+blast_data_2112$qseqid <- gsub("chromosome0000", "chr", blast_data_2112$qseqid)
+blast_data_2112$qseqid <- gsub("plasmid0000", "p", blast_data_2112$qseqid)
+blast_data_2112$qseqid <- gsub("FS", "", blast_data_2112$qseqid)
+blast_data_2112$qseqid <- gsub("_", " ", blast_data_2112$qseqid)
+blast_data_2112$qseqid <- gsub("2112", "", blast_data_2112$qseqid)
+
+blast_data_2112$sseqid <- gsub("chromosome0000", "chr", blast_data_2112$sseqid)
+blast_data_2112$sseqid <- gsub("plasmid0000", "p", blast_data_2112$sseqid)
+blast_data_2112$sseqid <- gsub("FS", "", blast_data_2112$sseqid)
+blast_data_2112$sseqid <- gsub("_", " ", blast_data_2112$sseqid)
+blast_data_2112$sseqid <- gsub("2112", "", blast_data_2112$sseqid)
+
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_2112)) {
+  query_seq <- blast_data_2112$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_2112$qseqid[i], start = blast_data_2112$qstart[i], end = blast_data_2112$qend[i]),
+    region2 = data.frame(chr = blast_data_2112$sseqid[i], start = blast_data_2112$sstart[i], end = blast_data_2112$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("2112", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+
+#2112
+
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "FSFC2112_vs_FSBL2112_circos.genomicInitialize_plot_ID>=99.9_L>=2kb.png"
+
+png(IMAGE.NAME, 
+    width = 450, 
+    height = 400, 
+    res = 400, 
+    units = "mm")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 6,
+           track.margin = c(0.005, 0.005), 
+           cell.padding = c(0.003, 0.003, 0.003, 0.003))
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_2112_OG, 
+                         plotType = "axis",
+                         axis.labels.cex = 1)
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_2112_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.05, ylim = c(0, 1))
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    cex = 1.75,
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(1.7, 0.5)
+  )
+}, bg.border = NA)
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_2112)) {
+  query_seq <- blast_data_2112$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_2112$qseqid[i], start = blast_data_2112$qstart[i], end = blast_data_2112$qend[i]),
+    region2 = data.frame(chr = blast_data_2112$sseqid[i], start = blast_data_2112$sstart[i], end = blast_data_2112$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("2112", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+# 3. Close the file
+dev.off()
+#
+# saved as png #_____________________________________________________________________________
+
+2112
+
+#_______________________________
+
+# > 2130 #######
+#_______________________________
+
+parse_blast <- function(blast_file) {
+  blast_data <- read.table(blast_file, header = FALSE, stringsAsFactors = FALSE)
+  colnames(blast_data) <- c("qseqid", "sseqid", "pident", "length", "mismatch", 
+                            "gapopen", "qstart", "qend", "sstart", "send", 
+                            "evalue", "bitscore")
+  return(blast_data)
+}
+
+blast_data_2130 <- parse_blast("BLAST/FSBL2130_vs_FSFC2130.blastn")
+
+# Prepare data frames for genomic initialization
+query_genome_2130 <- blast_data_2130 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_2130 <- blast_data_2130 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_2130 <- query_genome_2130 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_2130 <- sample_genome_2130 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_2130 <- rbind(query_lengths_2130, sample_lengths_2130)
+genome_lengths_2130
+
+#FC p4
+genome_lengths_2130[13,3] = 4761
+#FC p5
+genome_lengths_2130[14,3] = 3317
+#FC p7
+genome_lengths_2130[16,3] = 974
+
+#check
+genome_lengths_2130
+genome_lengths_2130_OG = genome_lengths_2130
+
+# Look for unique percentage idenitity 
+unique(blast_data_2130$pident)
+
+# Filter percentage identity to be only 100 and above the length of the shortest contig length 
+
+# blast_data_2130 = blast_data_2130 %>% filter(pident >= 99.5 & length > 5000)
+
+# blast_data_2130 = blast_data_2130 %>% filter(pident >= 99.5 & length > 0.9*(min(genome_lengths_2130$end)))
+
+# blast_data_2130 = blast_data_2130 %>% filter(pident >= 99.5 & length >= 2000)
+
+blast_data_2130 = blast_data_2130 %>% filter(pident >= 99.9 & length >= 2000)
+
+# check 
+blast_data_2130
+unique(blast_data_2130$pident)
+unique(blast_data_2130$length)
+
+# Prepare data frames for genomic initialization
+query_genome_2130 <- blast_data_2130 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_2130 <- blast_data_2130 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_2130 <- query_genome_2130 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_2130 <- sample_genome_2130 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_2130_new <- rbind(query_lengths_2130, sample_lengths_2130)
+
+# Check
+genome_lengths_2130_new
+genome_lengths_2130_OG
+
+
+
+# Rename contigs
+genome_lengths_2130_OG$chr = gsub("chromosome0000", "chr", genome_lengths_2130_OG$chr)
+genome_lengths_2130_OG$chr <- gsub("plasmid0000", "p", genome_lengths_2130_OG$chr)
+genome_lengths_2130_OG$chr <- gsub("FS", "", genome_lengths_2130_OG$chr)
+genome_lengths_2130_OG$chr <- gsub("_", " ", genome_lengths_2130_OG$chr)
+genome_lengths_2130_OG$chr <- gsub("2130", "", genome_lengths_2130_OG$chr)
+
+genome_lengths_2130_OG
+
+# Add a dummy numeric column
+genome_lengths_2130_OG$value <- 1
+
+
+# Define colors for specific sequences
+colors <- c("FC chr1" = "#176082", "FC p1" = "#08306B")
+
+colors = c("FC chr1" = "#176082", 
+           "FC p1" = "#08306B",
+           "FC p2" = "#2171B5",
+           "FC p3" = "#4292C6",
+           "FC p4" = "#6BAED6",
+           "FC p5" = "#9ECAE1",
+           "FC p6" =  "#C0B0E6",
+           "FC p7" = "#A899CC",
+           "FC p8" = "#9073B3",
+           "BL chr1" = "#C00001",
+           "BL p1" = "#A50F15",
+           "BL p2" = "#CB181D",
+           "BL p3" = "#EF3B2C",
+           "BL p4" = "#FB6A4A",
+           "BL p5" = "#FC9272",
+           "BL p6" = "#FF4500",
+           "BL p7" = "#FFB347")
+
+
+"#FFA07A" (Light Salmon)
+"#FF8C69" (Dark Salmon)
+"#FF7F50" (Coral)
+"#FF6347" (Tomato)
+"#FF4500" (Orange Red)
+"#FFB347" (Yellow Orange)
+"#FFB6C1" (Light Pink Orange)
+"#FFA07A" (Light Salmon)
+"#FF7043" (Burnt Orange)
+"#FF9E80" (Peach)
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 5)
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_2130_OG, plotType = "axis")
+
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_2130_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.1, ylim = c(0, 1))
+
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(2, 0.5)
+  )
+}, bg.border = NA)
+
+# Clean up the chromosome and plasmid names in the BLAST data
+blast_data_2130$qseqid <- gsub("chromosome0000", "chr", blast_data_2130$qseqid)
+blast_data_2130$qseqid <- gsub("plasmid0000", "p", blast_data_2130$qseqid)
+blast_data_2130$qseqid <- gsub("FS", "", blast_data_2130$qseqid)
+blast_data_2130$qseqid <- gsub("_", " ", blast_data_2130$qseqid)
+blast_data_2130$qseqid <- gsub("2130", "", blast_data_2130$qseqid)
+
+blast_data_2130$sseqid <- gsub("chromosome0000", "chr", blast_data_2130$sseqid)
+blast_data_2130$sseqid <- gsub("plasmid0000", "p", blast_data_2130$sseqid)
+blast_data_2130$sseqid <- gsub("FS", "", blast_data_2130$sseqid)
+blast_data_2130$sseqid <- gsub("_", " ", blast_data_2130$sseqid)
+blast_data_2130$sseqid <- gsub("2130", "", blast_data_2130$sseqid)
+
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_2130)) {
+  query_seq <- blast_data_2130$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_2130$qseqid[i], start = blast_data_2130$qstart[i], end = blast_data_2130$qend[i]),
+    region2 = data.frame(chr = blast_data_2130$sseqid[i], start = blast_data_2130$sstart[i], end = blast_data_2130$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("2130", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+
+#2130
+
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "FSFC2130_vs_FSBL2130_circos.genomicInitialize_plot_ID>=99.5_L>=2kb.png"
+
+png(IMAGE.NAME, 
+    width = 450, 
+    height = 400, 
+    res = 400, 
+    units = "mm")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 6,
+           track.margin = c(0.005, 0.005), 
+           cell.padding = c(0.003, 0.003, 0.003, 0.003))
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_2130_OG, 
+                         plotType = "axis",
+                         axis.labels.cex = 1)
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_2130_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.05, ylim = c(0, 1))
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    cex = 1.75,
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(1.7, 0.5)
+  )
+}, bg.border = NA)
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_2130)) {
+  query_seq <- blast_data_2130$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_2130$qseqid[i], start = blast_data_2130$qstart[i], end = blast_data_2130$qend[i]),
+    region2 = data.frame(chr = blast_data_2130$sseqid[i], start = blast_data_2130$sstart[i], end = blast_data_2130$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("2130", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+# 3. Close the file
+dev.off()
+#
+# saved as png #_____________________________________________________________________________
+
+2130
+
+
+#_______________________________
+
+# > 2155 #######
+#_______________________________
+
+parse_blast <- function(blast_file) {
+  blast_data <- read.table(blast_file, header = FALSE, stringsAsFactors = FALSE)
+  colnames(blast_data) <- c("qseqid", "sseqid", "pident", "length", "mismatch", 
+                            "gapopen", "qstart", "qend", "sstart", "send", 
+                            "evalue", "bitscore")
+  return(blast_data)
+}
+
+blast_data_2155 <- parse_blast("BLAST/FSBL2155_vs_FSFC2155.blastn")
+
+# Prepare data frames for genomic initialization
+query_genome_2155 <- blast_data_2155 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_2155 <- blast_data_2155 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_2155 <- query_genome_2155 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_2155 <- sample_genome_2155 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_2155 <- rbind(query_lengths_2155, sample_lengths_2155)
+
+genome_lengths_2155
+
+# BL p1
+genome_lengths_2155[2,3] = 297178
+# FC chr1
+genome_lengths_2155[5,3] = 4924353
+# FC p1
+genome_lengths_2155[6,3] = 368138
+# FC p2
+genome_lengths_2155[7,3] = 244643
+
+#check
+genome_lengths_2155
+genome_lengths_2155_OG = genome_lengths_2155
+
+# Look for unique percentage idenitity 
+unique(blast_data_2155$pident)
+
+# Filter percentage identity to be only 100 and above the length of the shortest contig length 
+
+# blast_data_2155 = blast_data_2155 %>% filter(pident >= 99.5 & length > min(genome_lengths_2155$end))
+
+# blast_data_2155 = blast_data_2155 %>% filter(pident >= 99.5 & length > 0.9*(min(genome_lengths_2155$end)))
+
+# blast_data_2155 = blast_data_2155 %>% filter(pident >= 99.5 & length > 5000)
+
+# blast_data_2155 = blast_data_2155 %>% filter(pident >= 99.5 & length >= 2000)
+
+blast_data_2155 = blast_data_2155 %>% filter(pident >= 99.9 & length >= 2000)
+
+# check 
+blast_data_2155
+unique(blast_data_2155$pident)
+unique(blast_data_2155$length)
+
+# Prepare data frames for genomic initialization
+query_genome_2155 <- blast_data_2155 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_2155 <- blast_data_2155 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_2155 <- query_genome_2155 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_2155 <- sample_genome_2155 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_2155_new <- rbind(query_lengths_2155, sample_lengths_2155)
+
+# Check
+genome_lengths_2155_new
+genome_lengths_2155_OG
+
+
+
+# Rename contigs
+genome_lengths_2155_OG$chr = gsub("chromosome0000", "chr", genome_lengths_2155_OG$chr)
+genome_lengths_2155_OG$chr <- gsub("plasmid0000", "p", genome_lengths_2155_OG$chr)
+genome_lengths_2155_OG$chr <- gsub("FS", "", genome_lengths_2155_OG$chr)
+genome_lengths_2155_OG$chr <- gsub("_", " ", genome_lengths_2155_OG$chr)
+genome_lengths_2155_OG$chr <- gsub("2155", "", genome_lengths_2155_OG$chr)
+
+genome_lengths_2155_OG
+
+# Add a dummy numeric column
+genome_lengths_2155_OG$value <- 1
+
+
+# Define colors for specific sequences
+colors <- c("FC chr1" = "#176082", "FC p1" = "#08306B")
+
+colors = c("FC chr1" = "#176082", 
+           "FC p1" = "#08306B",
+           "FC p2" = "#2171B5",
+           "FC p3" = "#4292C6",
+           "FC p4" = "#6BAED6",
+           "FC p5" = "#9ECAE1",
+           "FC p6" =  "#C0B0E6",
+           "FC p7" = "#A899CC",
+           "FC p7" = "#9073B3",
+           "BL chr1" = "#C00001",
+           "BL p1" = "#A50F15",
+           "BL p2" = "#CB181D",
+           "BL p3" = "#EF3B2C",
+           "BL p4" = "#FB6A4A",
+           "BL p5" = "#FC9272",
+           "BL p6" = "#FEE0D2",
+           "BL p7" = "#FFEBEE")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 5)
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_2155_OG, plotType = "axis")
+
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_2155_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.1, ylim = c(0, 1))
+
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(2, 0.5)
+  )
+}, bg.border = NA)
+
+# Clean up the chromosome and plasmid names in the BLAST data
+blast_data_2155$qseqid <- gsub("chromosome0000", "chr", blast_data_2155$qseqid)
+blast_data_2155$qseqid <- gsub("plasmid0000", "p", blast_data_2155$qseqid)
+blast_data_2155$qseqid <- gsub("FS", "", blast_data_2155$qseqid)
+blast_data_2155$qseqid <- gsub("_", " ", blast_data_2155$qseqid)
+blast_data_2155$qseqid <- gsub("2155", "", blast_data_2155$qseqid)
+
+blast_data_2155$sseqid <- gsub("chromosome0000", "chr", blast_data_2155$sseqid)
+blast_data_2155$sseqid <- gsub("plasmid0000", "p", blast_data_2155$sseqid)
+blast_data_2155$sseqid <- gsub("FS", "", blast_data_2155$sseqid)
+blast_data_2155$sseqid <- gsub("_", " ", blast_data_2155$sseqid)
+blast_data_2155$sseqid <- gsub("2155", "", blast_data_2155$sseqid)
+
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_2155)) {
+  query_seq <- blast_data_2155$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_2155$qseqid[i], start = blast_data_2155$qstart[i], end = blast_data_2155$qend[i]),
+    region2 = data.frame(chr = blast_data_2155$sseqid[i], start = blast_data_2155$sstart[i], end = blast_data_2155$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("2155", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+
+#2155
+
+
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "FSFC2155_vs_FSBL2155_new_circos.genomicInitialize_plot_ID>=99.9_L>=2kb.png"
+
+png(IMAGE.NAME, 
+    width = 450, 
+    height = 400, 
+    res = 400, 
+    units = "mm")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 6,
+           track.margin = c(0.005, 0.005), 
+           cell.padding = c(0.003, 0.003, 0.003, 0.003))
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_2155_OG, 
+                         plotType = "axis",
+                         axis.labels.cex = 1)
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_2155_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.05, ylim = c(0, 1))
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    cex = 1.75,
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(1.7, 0.5)
+  )
+}, bg.border = NA)
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_2155)) {
+  query_seq <- blast_data_2155$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_2155$qseqid[i], start = blast_data_2155$qstart[i], end = blast_data_2155$qend[i]),
+    region2 = data.frame(chr = blast_data_2155$sseqid[i], start = blast_data_2155$sstart[i], end = blast_data_2155$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("2155", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+# 3. Close the file
+dev.off()
+#
+# saved as png #_____________________________________________________________________________
+
+2155
+
+
+#_______________________________
+
+# > 2240 #######
+#_______________________________
+
+parse_blast <- function(blast_file) {
+  blast_data <- read.table(blast_file, header = FALSE, stringsAsFactors = FALSE)
+  colnames(blast_data) <- c("qseqid", "sseqid", "pident", "length", "mismatch", 
+                            "gapopen", "qstart", "qend", "sstart", "send", 
+                            "evalue", "bitscore")
+  return(blast_data)
+}
+
+blast_data_2240 <- parse_blast("BLAST/FSBL2240_vs_FSFC2240.blastn")
+
+unique(blast_data_2240$sseqid)
+
+blast_data_2240 <- blast_data_2240 %>%
+  mutate(sseqid = paste0("c", sseqid))
+
+
+unique(blast_data_2240$sseqid)
+unique(blast_data_2240$qseqid)
+
+# Prepare data frames for genomic initialization
+query_genome_2240 <- blast_data_2240 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_2240 <- blast_data_2240 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_2240 <- query_genome_2240 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_2240 <- sample_genome_2240 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_2240 <- rbind(query_lengths_2240, sample_lengths_2240)
+
+#check
+genome_lengths_2240
+
+# FC chr1
+# genome_lengths_2240[5,3] = 5052997
+
+
+genome_lengths_2240_OG = genome_lengths_2240
+genome_lengths_2240_OG
+
+# Look for unique percentage idenitity 
+unique(blast_data_2240$pident)
+
+# Filter percentage identity to be only 100 and above the length of the shortest contig length 
+
+# blast_data_2240 = blast_data_2240 %>% filter(pident >= 99.5 & length > 0.9*(min(genome_lengths_2240$end)))
+
+# blast_data_2240 = blast_data_2240 %>% filter(pident >= 99.5 & length > 5000
+
+# blast_data_2240 = blast_data_2240 %>% filter(pident >= 99.5 & length > min(genome_lengths_2240$end))
+
+# blast_data_2240 = blast_data_2240 %>% filter(pident >= 99.5 & length >= 2000)
+
+blast_data_2240 = blast_data_2240 %>% filter(pident >= 99.9)
+
+# check 
+blast_data_2240
+unique(blast_data_2240$pident)
+unique(blast_data_2240$length)
+
+
+
+# Prepare data frames for genomic initialization
+query_genome_2240 <- blast_data_2240 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_2240 <- blast_data_2240 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_2240 <- query_genome_2240 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_2240 <- sample_genome_2240 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_2240_new <- rbind(query_lengths_2240, sample_lengths_2240)
+
+# Check
+genome_lengths_2240_new
+genome_lengths_2240_OG
+
+
+
+# Rename contigs
+genome_lengths_2240_OG$chr = gsub("chromosome0000", "chr", genome_lengths_2240_OG$chr)
+genome_lengths_2240_OG$chr <- gsub("plasmid0000", "p", genome_lengths_2240_OG$chr)
+genome_lengths_2240_OG$chr <- gsub("plasmid000", "p", genome_lengths_2240_OG$chr)
+genome_lengths_2240_OG$chr <- gsub("FS", "", genome_lengths_2240_OG$chr)
+genome_lengths_2240_OG$chr <- gsub("_", " ", genome_lengths_2240_OG$chr)
+genome_lengths_2240_OG$chr <- gsub("2240", "", genome_lengths_2240_OG$chr)
+
+genome_lengths_2240_OG
+
+# Add a dummy numeric column
+genome_lengths_2240_OG$value <- 1
+
+blast_data_2240$qseqid <- gsub("chromosome0000", "chr", blast_data_2240$qseqid)
+blast_data_2240$qseqid <- gsub("plasmid0000", "p", blast_data_2240$qseqid)
+blast_data_2240$qseqid <- gsub("plasmid000", "p", blast_data_2240$qseqid)
+blast_data_2240$qseqid <- gsub("FS", "", blast_data_2240$qseqid)
+blast_data_2240$qseqid <- gsub("_", " ", blast_data_2240$qseqid)
+blast_data_2240$qseqid <- gsub("2240", "", blast_data_2240$qseqid)
+
+blast_data_2240$sseqid <- gsub("chromosome0000", "chr", blast_data_2240$sseqid)
+blast_data_2240$sseqid <- gsub("plasmid0000", "p", blast_data_2240$sseqid)
+blast_data_2240$sseqid <- gsub("plasmid000", "p", blast_data_2240$sseqid)
+blast_data_2240$sseqid <- gsub("FS", "", blast_data_2240$sseqid)
+blast_data_2240$sseqid <- gsub("_", " ", blast_data_2240$sseqid)
+blast_data_2240$sseqid <- gsub("2240", "", blast_data_2240$sseqid)
+
+unique(blast_data_2240$sseqid)
+unique(blast_data_2240$qseqid)
+
+unique_sseqid <- unique(blast_data_2240$sseqid)
+unique_qseqid <- unique(blast_data_2240$qseqid)
+
+# Generate color palettes
+sseqid_colors <- setNames(colorRampPalette(c("#176082", "#82aaff"))(length(unique_sseqid)), unique_sseqid)
+qseqid_colors <- setNames(colorRampPalette(c("#C00001", "#ff8282"))(length(unique_qseqid)), unique_qseqid)
+
+colors <- c(sseqid_colors, qseqid_colors)
+
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 5)
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_2240_OG, plotType = "axis")
+
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_2240_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.1, ylim = c(0, 1))
+
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(2, 0.5)
+  )
+}, bg.border = NA)
+
+# Clean up the chromosome and plasmid names in the BLAST data
+blast_data_2240$qseqid <- gsub("chromosome0000", "chr", blast_data_2240$qseqid)
+blast_data_2240$qseqid <- gsub("plasmid0000", "p", blast_data_2240$qseqid)
+blast_data_2240$qseqid <- gsub("plasmid000", "p", blast_data_2240$qseqid)
+blast_data_2240$qseqid <- gsub("FS", "", blast_data_2240$qseqid)
+blast_data_2240$qseqid <- gsub("_", " ", blast_data_2240$qseqid)
+blast_data_2240$qseqid <- gsub("2240", "", blast_data_2240$qseqid)
+
+blast_data_2240$sseqid <- gsub("chromosome0000", "chr", blast_data_2240$sseqid)
+blast_data_2240$sseqid <- gsub("plasmid0000", "p", blast_data_2240$sseqid)
+blast_data_2240$sseqid <- gsub("plasmid000", "p", blast_data_2240$sseqid)
+blast_data_2240$sseqid <- gsub("FS", "", blast_data_2240$sseqid)
+blast_data_2240$sseqid <- gsub("_", " ", blast_data_2240$sseqid)
+blast_data_2240$sseqid <- gsub("2240", "", blast_data_2240$sseqid)
+
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_2240)) {
+  query_seq <- blast_data_2240$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_2240$qseqid[i], start = blast_data_2240$qstart[i], end = blast_data_2240$qend[i]),
+    region2 = data.frame(chr = blast_data_2240$sseqid[i], start = blast_data_2240$sstart[i], end = blast_data_2240$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("2240", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+
+# Find specific contigs that align below 99.9%
+
+
+FC2240_c16_df <- blast_data_2240 %>%
+  filter(str_detect(blast_data_2240$sseqid, "c16"))
+
+
+FC2240_c7_df <- blast_data_2240 %>%
+  filter(str_detect(blast_data_2240$sseqid, "c7"))
+
+filtered_df$pident
+
+
+#2240
+#2240
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "FSFC2240_vs_FSBL2240_circos.genomicInitialize_plot_ID>=99.9.png"
+
+png(IMAGE.NAME, 
+    width = 450, 
+    height = 400, 
+    res = 400, 
+    units = "mm")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 6,
+           track.margin = c(0.005, 0.005), 
+           cell.padding = c(0.003, 0.003, 0.003, 0.003))
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_2240_OG, 
+                         plotType = "axis",
+                         axis.labels.cex = 1)
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_2240_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.05, ylim = c(0, 1))
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    cex = 1.75,
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(1.7, 0.5)
+  )
+}, bg.border = NA)
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_2240)) {
+  query_seq <- blast_data_2240$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_2240$qseqid[i], start = blast_data_2240$qstart[i], end = blast_data_2240$qend[i]),
+    region2 = data.frame(chr = blast_data_2240$sseqid[i], start = blast_data_2240$sstart[i], end = blast_data_2240$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("2240", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+# 3. Close the file
+dev.off()
+#
+# saved as png #_____________________________________________________________________________
+
+2240
+
+#_______________________________
+
+# > 2258 #######
+#_______________________________
+
+parse_blast <- function(blast_file) {
+  blast_data <- read.table(blast_file, header = FALSE, stringsAsFactors = FALSE)
+  colnames(blast_data) <- c("qseqid", "sseqid", "pident", "length", "mismatch", 
+                            "gapopen", "qstart", "qend", "sstart", "send", 
+                            "evalue", "bitscore")
+  return(blast_data)
+}
+
+blast_data_2258 <- parse_blast("BLAST/FSBL2258_vs_FSFC2258.blastn")
+
+# Prepare data frames for genomic initialization
+query_genome_2258 <- blast_data_2258 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_2258 <- blast_data_2258 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_2258 <- query_genome_2258 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_2258 <- sample_genome_2258 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_2258 <- rbind(query_lengths_2258, sample_lengths_2258)
+
+#check
+genome_lengths_2258
+genome_lengths_2258_OG = genome_lengths_2258
+
+# Look for unique percentage idenitity 
+unique(blast_data_2258$pident)
+
+# Filter percentage identity to be only 100 and above the length of the shortest contig length 
+
+# blast_data_2258 = blast_data_2258 %>% filter(pident >= 99.5 & length > 0.9*(min(genome_lengths_2258$end)))
+
+# blast_data_2258 = blast_data_2258 %>% filter(pident >= 99.5 & length >= min(genome_lengths_2258$end))
+
+# blast_data_2258 = blast_data_2258 %>% filter(pident >= 99.5 & length >= 2000)
+
+blast_data_2258 = blast_data_2258 %>% filter(pident >= 99.9 & length >= 2000)
+
+# check 
+blast_data_2258
+unique(blast_data_2258$pident)
+unique(blast_data_2258$length)
+
+# Prepare data frames for genomic initialization
+query_genome_2258 <- blast_data_2258 %>%
+  select(qseqid, qstart, qend) %>%
+  rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_2258 <- blast_data_2258 %>%
+  select(sseqid, sstart, send) %>%
+  rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_2258 <- query_genome_2258 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_2258 <- sample_genome_2258 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_2258_new <- rbind(query_lengths_2258, sample_lengths_2258)
+
+# Check
+genome_lengths_2258_new
+genome_lengths_2258_OG
+
+
+
+# Rename contigs
+genome_lengths_2258_OG$chr = gsub("chromosome0000", "chr", genome_lengths_2258_OG$chr)
+genome_lengths_2258_OG$chr <- gsub("plasmid0000", "p", genome_lengths_2258_OG$chr)
+genome_lengths_2258_OG$chr <- gsub("FS", "", genome_lengths_2258_OG$chr)
+genome_lengths_2258_OG$chr <- gsub("_", " ", genome_lengths_2258_OG$chr)
+genome_lengths_2258_OG$chr <- gsub("2258", "", genome_lengths_2258_OG$chr)
+
+genome_lengths_2258_OG
+
+# Add a dummy numeric column
+genome_lengths_2258_OG$value <- 1
+
+
+# Define colors for specific sequences
+colors <- c("FC chr1" = "#176082", "FC p1" = "#08306B")
+
+colors = c("FC chr1" = "#176082", 
+           "FC p1" = "#08306B",
+           "FC p2" = "#2171B5",
+           "FC p3" = "#4292C6",
+           "FC p4" = "#6BAED6",
+           "FC p5" = "#9ECAE1",
+           "FC p6" =  "#C0B0E6",
+           "FC p7" = "#A899CC",
+           "FC p7" = "#9073B3",
+           "BL chr1" = "#C00001",
+           "BL p1" = "#A50F15",
+           "BL p2" = "#CB181D",
+           "BL p3" = "#EF3B2C",
+           "BL p4" = "#FB6A4A",
+           "BL p5" = "#FC9272",
+           "BL p6" = "#FEE0D2",
+           "BL p7" = "#FFEBEE")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 5)
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_2258_OG, plotType = "axis")
+
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_2258_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.1, ylim = c(0, 1))
+
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(2, 0.5)
+  )
+}, bg.border = NA)
+
+# Clean up the chromosome and plasmid names in the BLAST data
+blast_data_2258$qseqid <- gsub("chromosome0000", "chr", blast_data_2258$qseqid)
+blast_data_2258$qseqid <- gsub("plasmid0000", "p", blast_data_2258$qseqid)
+blast_data_2258$qseqid <- gsub("FS", "", blast_data_2258$qseqid)
+blast_data_2258$qseqid <- gsub("_", " ", blast_data_2258$qseqid)
+blast_data_2258$qseqid <- gsub("2258", "", blast_data_2258$qseqid)
+
+blast_data_2258$sseqid <- gsub("chromosome0000", "chr", blast_data_2258$sseqid)
+blast_data_2258$sseqid <- gsub("plasmid0000", "p", blast_data_2258$sseqid)
+blast_data_2258$sseqid <- gsub("FS", "", blast_data_2258$sseqid)
+blast_data_2258$sseqid <- gsub("_", " ", blast_data_2258$sseqid)
+blast_data_2258$sseqid <- gsub("2258", "", blast_data_2258$sseqid)
+
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_2258)) {
+  query_seq <- blast_data_2258$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_2258$qseqid[i], start = blast_data_2258$qstart[i], end = blast_data_2258$qend[i]),
+    region2 = data.frame(chr = blast_data_2258$sseqid[i], start = blast_data_2258$sstart[i], end = blast_data_2258$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("2258", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+
+
+
+
+#2258
+
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "FSFC2258_vs_FSBL2258_circos.genomicInitialize_plot_ID>=99.9_L>=2kb.png"
+
+png(IMAGE.NAME, 
+    width = 450, 
+    height = 400, 
+    res = 400, 
+    units = "mm")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 6,
+           track.margin = c(0.005, 0.005), 
+           cell.padding = c(0.003, 0.003, 0.003, 0.003))
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_2258_OG, 
+                         plotType = "axis",
+                         axis.labels.cex = 1)
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_2258_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.05, ylim = c(0, 1))
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    cex = 1.75,
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(1.7, 0.5)
+  )
+}, bg.border = NA)
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_2258)) {
+  query_seq <- blast_data_2258$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_2258$qseqid[i], start = blast_data_2258$qstart[i], end = blast_data_2258$qend[i]),
+    region2 = data.frame(chr = blast_data_2258$sseqid[i], start = blast_data_2258$sstart[i], end = blast_data_2258$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("2258", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+# 3. Close the file
+dev.off()
+#
+# saved as png #_____________________________________________________________________________
+
+2258
+
+
+
+#_______________________________
+
+# > 1925 #######
+#_______________________________
+
+parse_blast <- function(blast_file) {
+  blast_data <- read.table(blast_file, header = FALSE, stringsAsFactors = FALSE)
+  colnames(blast_data) <- c("qseqid", "sseqid", "pident", "length", "mismatch", 
+                            "gapopen", "qstart", "qend", "sstart", "send", 
+                            "evalue", "bitscore")
+  return(blast_data)
+}
+
+blast_data_1925 <- parse_blast("BLAST/FSBL1925_vs_FSFC1925.blastn")
+
+
+blast_data_1925 <- parse_blast("/Users/richard.goodman/Library/CloudStorage/OneDrive-LSTM/Manuscripts for Papers/Sabrinas 16 blood and fecal isolate identities/hybracter_assembly_analysis/BLAST/FSBL1925_vs_FSFC1925.blastn") 
+
+# Prepare data frames for genomic initialization
+query_genome_1925 <- blast_data_1925 %>%
+  dplyr::select(qseqid, qstart, qend) %>%
+  dplyr::rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_1925 <- blast_data_1925 %>%
+  dplyr::select(sseqid, sstart, send) %>%
+  dplyr::rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_1925 <- query_genome_1925 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_1925 <- sample_genome_1925 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_1925 <- rbind(query_lengths_1925, sample_lengths_1925)
+
+#check
+genome_lengths_1925
+genome_lengths_1925_OG = genome_lengths_1925
+
+# Look for unique percentage idenitity 
+unique(blast_data_1925$pident)
+
+# Filter percentage identity to be only 100 and above the length of the shortest contig length 
+
+# blast_data_1925 = blast_data_1925 %>% filter(pident >= 99.5 & length > 0.9*(min(genome_lengths_1925$end)))
+
+# blast_data_1925 = blast_data_1925 %>% filter(pident >= 99.5 & length >= min(genome_lengths_1925$end))
+
+# blast_data_1925 = blast_data_1925 %>% filter(pident >= 99.5 & length >= 2000)
+
+blast_data_1925 = blast_data_1925 %>% filter(pident >= 99.9 & length >= 2000)
+blast_data_1925 = blast_data_1925 %>% filter(pident >= 99.0 & length >= 2000)
+
+# check 
+blast_data_1925
+unique(blast_data_1925$pident)
+unique(blast_data_1925$length)
+
+# Prepare data frames for genomic initialization
+query_genome_1925 <- blast_data_1925 %>%
+  dplyr::select(qseqid, qstart, qend) %>%
+  dplyr::rename(chr = qseqid, start = qstart, end = qend)
+
+sample_genome_1925 <- blast_data_1925 %>%
+  dplyr::select(sseqid, sstart, send) %>%
+  dplyr::rename(chr = sseqid, start = sstart, end = send)
+
+# Combine for full genome lengths (assuming maximum end is the length)
+query_lengths_1925 <- query_genome_1925 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+sample_lengths_1925 <- sample_genome_1925 %>%
+  group_by(chr) %>%
+  summarise(start = 0, end = max(end))
+
+# Merge the lengths data for circos initialization
+genome_lengths_1925_new <- rbind(query_lengths_1925, sample_lengths_1925)
+
+# Check
+genome_lengths_1925_new
+genome_lengths_1925_OG
+
+
+
+# Rename contigs
+genome_lengths_1925_OG$chr = gsub("chromosome0000", "chr", genome_lengths_1925_OG$chr)
+genome_lengths_1925_OG$chr <- gsub("plasmid0000", "p", genome_lengths_1925_OG$chr)
+genome_lengths_1925_OG$chr <- gsub("FS", "", genome_lengths_1925_OG$chr)
+genome_lengths_1925_OG$chr <- gsub("_", " ", genome_lengths_1925_OG$chr)
+genome_lengths_1925_OG$chr <- gsub("1925", "", genome_lengths_1925_OG$chr)
+
+genome_lengths_1925_OG
+
+# Add a dummy numeric column
+genome_lengths_1925_OG$value <- 1
+
+
+# Define colors for specific sequences
+colors <- c("FC chr1" = "#176082", "FC p1" = "#08306B")
+
+colors = c("FC chr1" = "#176082", 
+           "FC p1" = "#08306B",
+           "FC p2" = "#2171B5",
+           "FC p3" = "#4292C6",
+           "FC p4" = "#6BAED6",
+           "FC p5" = "#9ECAE1",
+           "FC p6" =  "#C0B0E6",
+           "FC p7" = "#A899CC",
+           "FC p7" = "#9073B3",
+           "BL chr1" = "#C00001",
+           "BL p1" = "#A50F15",
+           "BL p2" = "#CB181D",
+           "BL p3" = "#EF3B2C",
+           "BL p4" = "#FB6A4A",
+           "BL p5" = "#FC9272",
+           "BL p6" = "#FEE0D2",
+           "BL p7" = "#FFEBEE")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 5)
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_1925_OG, plotType = "axis")
+
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_1925_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.1, ylim = c(0, 1))
+
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(2, 0.5)
+  )
+}, bg.border = NA)
+
+# Clean up the chromosome and plasmid names in the BLAST data
+blast_data_1925$qseqid <- gsub("chromosome0000", "chr", blast_data_1925$qseqid)
+blast_data_1925$qseqid <- gsub("plasmid0000", "p", blast_data_1925$qseqid)
+blast_data_1925$qseqid <- gsub("FS", "", blast_data_1925$qseqid)
+blast_data_1925$qseqid <- gsub("_", " ", blast_data_1925$qseqid)
+blast_data_1925$qseqid <- gsub("1925", "", blast_data_1925$qseqid)
+
+blast_data_1925$sseqid <- gsub("chromosome0000", "chr", blast_data_1925$sseqid)
+blast_data_1925$sseqid <- gsub("plasmid0000", "p", blast_data_1925$sseqid)
+blast_data_1925$sseqid <- gsub("FS", "", blast_data_1925$sseqid)
+blast_data_1925$sseqid <- gsub("_", " ", blast_data_1925$sseqid)
+blast_data_1925$sseqid <- gsub("1925", "", blast_data_1925$sseqid)
+
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_1925)) {
+  query_seq <- blast_data_1925$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_1925$qseqid[i], start = blast_data_1925$qstart[i], end = blast_data_1925$qend[i]),
+    region2 = data.frame(chr = blast_data_1925$sseqid[i], start = blast_data_1925$sstart[i], end = blast_data_1925$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("1925", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+
+
+
+
+#1925
+
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "FSFC1925_vs_FSBL1925_circos.genomicInitialize_plot_ID>=99.9_L>=2kb.png"
+
+png(IMAGE.NAME, 
+    width = 450, 
+    height = 400, 
+    res = 400, 
+    units = "mm")
+
+# Clear previous plots
+circos.clear()
+circos.par(gap.degree = 6,
+           track.margin = c(0.005, 0.005), 
+           cell.padding = c(0.003, 0.003, 0.003, 0.003))
+
+# Initialize the genome data
+circos.genomicInitialize(genome_lengths_1925_OG, 
+                         plotType = "axis",
+                         axis.labels.cex = 1)
+
+# Add a new track with different colors for each chromosome
+circos.genomicTrackPlotRegion(genome_lengths_1925_OG, panel.fun = function(region, value, ...) {
+  sector.index <- get.cell.meta.data("sector.index")
+  col <- colors[sector.index]
+  circos.genomicRect(region, value, col = col, border = NA)
+}, bg.border = NA, track.height = 0.05, ylim = c(0, 1))
+
+# Add custom sector labels with rotation
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  sector.index <- get.cell.meta.data("sector.index")
+  xcenter <- get.cell.meta.data("xcenter")
+  circos.text(
+    cex = 1.75,
+    x = xcenter, 
+    y = get.cell.meta.data("ylim")[1], 
+    labels = sector.index, 
+    facing = "reverse.clockwise", 
+    niceFacing = TRUE, 
+    adj = c(1.7, 0.5)
+  )
+}, bg.border = NA)
+# Plot the connections with specific colors
+for (i in 1:nrow(blast_data_1925)) {
+  query_seq <- blast_data_1925$qseqid[i]
+  color <- colors[query_seq]
+  
+  circos.genomicLink(
+    region1 = data.frame(chr = blast_data_1925$qseqid[i], start = blast_data_1925$qstart[i], end = blast_data_1925$qend[i]),
+    region2 = data.frame(chr = blast_data_1925$sseqid[i], start = blast_data_1925$sstart[i], end = blast_data_1925$send[i]),
+    col = adjustcolor(color, alpha.f = 0.5)
+  )
+}
+
+# Add a title to the plot with increased text size
+title("1925", cex.main = 2)
+
+# Clear circos plot to avoid affecting future plots
+circos.clear()
+
+# 3. Close the file
+dev.off()
+#
+# saved as png #_____________________________________________________________________________
+
+

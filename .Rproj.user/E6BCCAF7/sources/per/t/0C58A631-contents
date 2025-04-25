@@ -1,0 +1,2765 @@
+#________________________________
+#
+###### Breseq Heatmap Visualizations ######
+#_______________________________
+
+# Load necessary libraries
+library(readxl)
+library(pheatmap)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(RColorBrewer)
+library(ggplot2)
+
+#________________________________
+#
+###### Simple breseq heatmap of genes ######
+#_______________________________
+
+# Load the data (adjust the path to your file location)
+file_path <- "data/paired_blood_fecal_breseq_comparisons.xlsx"
+file_path <- "data/paired_blood_fecal_breseq_comparisons_updated_with_unicycler.xlsx"
+
+data <- read_excel(file_path)
+
+# Extract relevant columns
+mutations_df <- data %>% select(isolate = `isolate`, description = `description`, annotation = `annotation`)
+
+# Drop rows with missing values in the isolate or description columns
+mutations_df <- mutations_df %>% filter(!is.na(isolate) & !is.na(description))
+
+# Ensure unique descriptions for "hypothetical protein"
+mutations_df <- mutations_df %>%
+  mutate(description = ifelse(description == "hypothetical protein", 
+                              paste(description, row_number(), sep = "_"), 
+                              description))
+
+# Create the pivot table
+mutations_pivot <- table(mutations_df$isolate, mutations_df$description)
+mutations_pivot <- as.data.frame.matrix(mutations_pivot)
+
+# Convert counts to binary presence/absence
+mutations_pivot[mutations_pivot > 0] <- 1
+
+
+# Generate the heatmap
+pheatmap(mutations_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Predicted Mutations from breseq",
+         fontsize_number = 8)
+
+
+# Transpose the pivot table
+mutations_pivot_t <- t(mutations_pivot)
+
+# Custom color palette: Reds, Oranges, and Yellows
+custom_colors <- colorRampPalette(c("#FFFFFF","#FBF5BB", "#FADF9F", "#F8B877", "#D37A5A", "#A84451"))(100)
+
+cols <- brewer.pal(9, "YlOrRd")
+
+# Generate the heatmap with transposed data
+p = pheatmap(mutations_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Predicted Mutations from breseq",
+         fontsize_number = 8, 
+         color = custom_colors,
+         border_color = "black")
+
+p
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "breseq_all_gene_heatmap.png"
+#
+png(IMAGE.NAME, 
+    width = 1000, 
+    height = 1900, 
+    res = 300, 
+    units = "mm")
+# 2. Create the plot
+p
+# 3. Close the file
+dev.off()
+
+
+
+#________________________________
+#
+###### Count gene class heatmap ######
+#_______________________________
+
+# Load the data (adjust the path to your file location)
+file_path <- "data/paired_blood_fecal_breseq_comparisons.xlsx"
+file_path <- "data/paired_blood_fecal_breseq_comparisons_updated_with_unicycler.xlsx"
+data <- read_excel(file_path)
+
+# Extract relevant columns
+class_df <- data %>% select(isolate = `isolate`, 
+                                description = `description`, 
+                                annotation = `annotation`,
+                                class = `class`)
+
+# Drop rows with missing values in the isolate or description columns
+class_df <- class_df %>% filter(!is.na(isolate) & !is.na(description))
+
+# Create the pivot table
+class_pivot <- table(class_df$isolate, class_df$class)
+class_pivot <- as.data.frame.matrix(class_pivot)
+
+# Generate the heatmap
+pheatmap(class_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Predicted gene class from breseq",
+         fontsize_number = 8)
+
+
+# Transpose the pivot table
+class_pivot_t <- t(class_pivot)
+
+# Generate the heatmap with transposed data
+pheatmap(class_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Predicted gene class from breseq",
+         fontsize_number = 8, 
+         border_color = "black")
+
+# Custom color palette: Reds, Oranges, and Yellows
+custom_colors <- colorRampPalette(c("#FFFFFF","#FBF5BB", "#FADF9F", "#F8B877", "#D37A5A", "#A84451"))(100)
+
+cols <- brewer.pal(9, "YlOrRd")
+
+# Generate the heatmap with transposed data
+pheatmap(class_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Predicted gene class from breseq",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black")
+
+
+#________________________________
+#
+###### Count gene eggNOG class heatmap minus 2155 ######
+#_______________________________
+
+# Load the data (adjust the path to your file location)
+file_path <- "data/paired_blood_fecal_breseq_comparisons.xlsx"
+file_path <- "data/paired_blood_fecal_breseq_comparisons_updated_with_unicycler.xlsx"
+data <- read_excel(file_path)
+
+
+
+
+
+
+
+
+# Extract relevant columns
+class_df_eggnog <- data %>%  select(isolate = `isolate`, 
+                                        description = `description`, 
+                                        annotation = `annotation`,
+                                        class = `COG_class`)
+
+# Remove rows where isolate is "FSFC2155_v_FSBL2155"
+class_df_eggnog <- class_df_eggnog %>% filter(isolate != "FSFC2155_v_FSBL2155")
+
+# Drop rows with missing values in the isolate or description columns
+class_df_eggnog <- class_df_eggnog %>% filter(!is.na(isolate) & !is.na(description))
+
+# Ensure unique descriptions for "hypothetical protein" and handle duplicates
+class_df_eggnog <- class_df_eggnog %>%
+  group_by(description) %>%
+  mutate(description = ifelse(description == "hypothetical protein" | duplicated(description),
+                              paste(description, row_number(), sep = "_"), 
+                              description)) %>%
+  ungroup()
+
+
+# Create the pivot table
+class_eggnog_pivot <- table(class_df_eggnog$isolate, class_df_eggnog$class)
+class_eggnog_pivot <- as.data.frame.matrix(class_eggnog_pivot)
+
+# Generate the heatmap
+pheatmap(class_eggnog_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Predicted gene class from breseq",
+         fontsize_number = 8)
+
+
+# Transpose the pivot table
+class_eggnog_pivot_t <- t(class_eggnog_pivot)
+
+# Generate the heatmap with transposed data
+pheatmap(class_eggnog_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Predicted gene class from breseq",
+         fontsize_number = 8, 
+         border_color = "black")
+
+# Custom color palette: Reds, Oranges, and Yellows
+custom_colors <- colorRampPalette(c("#FFFFFF","#FBF5BB", "#FADF9F", "#F8B877", "#D37A5A", "#A84451"))(100)
+
+cols <- brewer.pal(9, "YlOrRd")
+
+# Generate the heatmap with transposed data
+pheatmap(class_eggnog_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Predicted gene class from breseq",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black")
+
+
+
+
+
+#________________________________
+#
+###### Count gene description heatmap annotated minus 2155 transposed ######
+#_______________________________
+
+# Load the data (adjust the path to your file location)
+file_path <- "data/paired_blood_fecal_breseq_comparisons.xlsx"
+file_path <- "data/paired_blood_fecal_breseq_comparisons_updated_with_unicycler.xlsx"
+data <- read_excel(file_path)
+
+# Extract relevant columns
+class_df <- data %>% select(isolate = `isolate`, 
+                            description = `description`, 
+                            annotation = `annotation`,
+                            class = `class`)
+
+# Remove rows where isolate is "FSFC2155_v_FSBL2155"
+class_df <- class_df %>% filter(isolate != "FSFC2155_v_FSBL2155")
+
+# Drop rows with missing values in the isolate or description columns
+class_df <- class_df %>% filter(!is.na(isolate) & !is.na(description))
+
+# Check for "intergenic" in the annotation column and create a new column
+class_df <- class_df %>%
+  mutate(context = ifelse(grepl("intergenic", annotation, ignore.case = TRUE), "Intergenic", "Coding sequence"))
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Tail fiber assembly protein") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+# Create the pivot table
+class_pivot <- table(class_df$isolate, class_df$description)
+class_pivot <- as.data.frame.matrix(class_pivot)
+
+# Create annotation data frame for intergenic and class information
+annotation_df <- class_df %>%
+  select(description, context, class) %>%
+  distinct() 
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Tail fiber assembly protein") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+
+annotation_df <- annotation_df %>% 
+  column_to_rownames("description") 
+
+# Transpose the pivot table
+class_pivot_t <- t(class_pivot)
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df <- annotation_df[rownames(class_pivot_t), , drop = FALSE]
+
+# Define annotation colors
+annotation_colors <- list(
+  context = c("Intergenic" = "red", "Coding sequence" = "blue"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(annotation_df$class))), unique(annotation_df$class))
+)
+
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         annotation_row = annotation_df,
+         annotation_colors = annotation_colors)
+
+# Custom color palette: Reds, Oranges, and Yellows
+custom_colors <- colorRampPalette(c("#FFFFFF","#FBF5BB", "#FADF9F", "#F8B877", "#D37A5A", "#A84451"))(100)
+
+cols <- brewer.pal(9, "YlOrRd")
+
+# Generate the heatmap with transposed data
+pheatmap(class_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Predicted gene class from breseq",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_row = annotation_df,
+         annotation_colors = annotation_colors)
+
+
+#________________________________
+#
+# reorder the matrix based in the annotation
+#________________________________
+
+sub_samp_ordered <- class_df[order(class_df$class),]
+
+sub_samp_ordered_class <- unique(sub_samp_ordered$description)
+
+sub_samp_ordered_anno <- unique(sub_samp_ordered$class)
+
+# Reorder columns based on the custom order
+ordered_class_pivot_t <- class_pivot_t[match(sub_samp_ordered_class, rownames(class_pivot_t)),]
+
+annotation_colors <- list(
+  context = c("Intergenic" = "#CAB2D6", "Coding sequence" = "#6A3E9A"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(sub_samp_ordered_anno))), unique(sub_samp_ordered_anno))
+)
+
+
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df <- annotation_df[rownames(ordered_class_pivot_t), , drop = FALSE]
+
+pheatmap(ordered_class_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_row = annotation_df,
+         annotation_colors = annotation_colors)
+
+p
+
+
+#________________________________
+#
+###### Count gene description heatmap annotated minus 2155 non transposed ######
+#_______________________________
+
+# Load the data (adjust the path to your file location)
+file_path <- "data/paired_blood_fecal_breseq_comparisons.xlsx"
+data <- read_excel(file_path)
+
+# Extract relevant columns
+class_df <- data %>% select(isolate = `isolate`, 
+                            description = `description`, 
+                            annotation = `annotation`,
+                            class = `class`)
+
+# Remove rows where isolate is "FSFC2155_v_FSBL2155"
+class_df <- class_df %>% filter(isolate != "FSFC2155_v_FSBL2155")
+
+# Drop rows with missing values in the isolate or description columns
+class_df <- class_df %>% filter(!is.na(isolate) & !is.na(description))
+
+# Check for "intergenic" in the annotation column and create a new column
+class_df <- class_df %>%
+  mutate(context = ifelse(grepl("intergenic", annotation, ignore.case = TRUE), "Intergenic", "Coding sequence"))
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Tail fiber assembly protein") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+# Create the pivot table
+class_pivot <- table(class_df$isolate, class_df$description)
+class_pivot <- as.data.frame.matrix(class_pivot)
+
+# Create annotation data frame for intergenic and class information
+annotation_df <- class_df %>%
+  select(description, context, class) %>%
+  distinct() 
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Tail fiber assembly protein") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+
+annotation_df <- annotation_df %>% 
+  column_to_rownames("description") 
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df <- annotation_df[colnames(class_pivot), , drop = FALSE]
+
+# Define annotation colors
+annotation_colors <- list(
+  context = c("Intergenic" = "red", "Coding sequence" = "blue"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(annotation_df$class))), unique(annotation_df$class))
+)
+
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         annotation_col = annotation_df,
+         annotation_colors = annotation_colors,
+         angle_col = 45)
+
+# Custom color palette: Reds, Oranges, and Yellows
+custom_colors <- colorRampPalette(c("#FFFFFF","#FBF5BB", "#FADF9F", "#F8B877", "#D37A5A", "#A84451"))(100)
+
+cols <- brewer.pal(9, "YlOrRd")
+
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = cols,
+         border_color = "black",
+         annotation_col = annotation_df,
+         annotation_colors = annotation_colors,
+         angle_col = 45)
+
+#________________________________
+#
+# reorder the matrix based in the annotation
+#________________________________
+
+sub_samp_ordered <- class_df[order(class_df$class),]
+
+sub_samp_ordered_class <- unique(sub_samp_ordered$description)
+
+sub_samp_ordered_anno <- unique(sub_samp_ordered$class)
+
+# Reorder columns based on the custom order
+ordered_class_pivot <- class_pivot[, match(sub_samp_ordered_class, colnames(class_pivot))]
+
+annotation_colors <- list(
+  context = c("Intergenic" = "#CAB2D6", "Coding sequence" = "#6A3E9A"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(sub_samp_ordered_anno))), unique(sub_samp_ordered_anno))
+)
+
+
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df <- annotation_df[colnames(ordered_class_pivot), , drop = FALSE]
+
+pheatmap(ordered_class_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_col = annotation_df,
+         annotation_colors = annotation_colors)
+
+p
+
+
+
+
+#________________________________
+#
+###### Count gene description heatmap annotated 2155 only transposed ######
+#_______________________________
+
+# Load the data (adjust the path to your file location)
+file_path <- "data/paired_blood_fecal_breseq_comparisons.xlsx"
+data <- read_excel(file_path)
+
+# Extract relevant columns
+class_df <- data %>% select(isolate = `isolate`, 
+                            description = `description`, 
+                            annotation = `annotation`,
+                            class = `class`)
+
+# Remove rows where isolate is "FSFC2155_v_FSBL2155"
+class_df <- class_df %>% filter(isolate == "FSFC2155_v_FSBL2155")
+
+# Drop rows with missing values in the isolate or description columns
+class_df <- class_df %>% filter(!is.na(isolate) & !is.na(description))
+
+# Check for "intergenic" in the annotation column and create a new column
+class_df <- class_df %>%
+  mutate(context = ifelse(grepl("intergenic", annotation, ignore.case = TRUE), "Intergenic", "Coding sequence"))
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Tail fiber assembly protein") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+# Create the pivot table
+class_pivot <- table(class_df$isolate, class_df$description)
+class_pivot <- as.data.frame.matrix(class_pivot)
+
+# Create annotation data frame for intergenic and class information
+annotation_df <- class_df %>%
+  select(description, context, class) %>%
+  distinct() 
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Tail fiber assembly protein") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+
+annotation_df <- annotation_df %>% 
+  column_to_rownames("description") 
+
+# Transpose the pivot table
+class_pivot_t <- t(class_pivot)
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df_2 <- annotation_df[rownames(class_pivot_t), , drop = FALSE]
+
+# Define annotation colors
+annotation_colors <- list(
+  context = c("Intergenic" = "red", "Coding sequence" = "blue"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(annotation_df$class))), unique(annotation_df$class))
+)
+
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         annotation_row = annotation_df,
+         annotation_colors = annotation_colors)
+
+# Custom color palette: Reds, Oranges, and Yellows
+custom_colors <- colorRampPalette(c("#FFFFFF","#FBF5BB", "#FADF9F", "#F8B877", "#D37A5A", "#A84451"))(100)
+
+cols <- brewer.pal(9, "YlOrRd")
+
+# Generate the heatmap with transposed data
+pheatmap(class_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Predicted gene class from breseq",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_row = annotation_df,
+         annotation_colors = annotation_colors)
+
+
+
+#________________________________
+#
+# reorder the matrix based in the annotation
+#________________________________
+
+sub_samp_ordered <- class_df[order(class_df$class),]
+
+sub_samp_ordered_class <- unique(sub_samp_ordered$description)
+
+sub_samp_ordered_anno <- unique(sub_samp_ordered$class)
+
+rownames(class_pivot_t)
+
+# Reorder columns based on the custom order
+ordered_class_pivot_t <- class_pivot_t[match(sub_samp_ordered_class, colnames(class_pivot_t)),]
+
+rownames(ordered_class_pivot_t)
+
+
+
+annotation_colors <- list(
+  context = c("Intergenic" = "#CAB2D6", "Coding sequence" = "#6A3E9A"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(sub_samp_ordered_anno))), unique(sub_samp_ordered_anno))
+)
+
+
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df_2 <- annotation_df[colnames(ordered_class_pivot_t), , drop = FALSE]
+
+
+pheatmap(ordered_class_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_col = annotation_df_2,
+         annotation_colors = annotation_colors)
+
+p
+
+
+
+
+
+sub_samp_ordered <- class_df[order(class_df$class),]
+
+sub_samp_ordered_class <- unique(sub_samp_ordered$description)
+
+sub_samp_ordered_anno <- unique(sub_samp_ordered$class)
+
+# Reorder columns based on the custom order
+ordered_class_pivot_t <- class_pivot_t[match(sub_samp_ordered_class, rownames(class_pivot_t)),]
+
+annotation_colors <- list(
+  context = c("Intergenic" = "#CAB2D6", "Coding sequence" = "#6A3E9A"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(sub_samp_ordered_anno))), unique(sub_samp_ordered_anno))
+)
+
+
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df <- annotation_df[rownames(ordered_class_pivot_t), , drop = FALSE]
+
+pheatmap(ordered_class_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_row = annotation_df,
+         annotation_colors = annotation_colors)
+
+
+
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "breseq count gene description heatmap annotated minus 2155 transposed NEW.png"
+#
+png(IMAGE.NAME, 
+    width = 500, 
+    height = 1500, 
+    res = 300, 
+    units = "mm")
+# 2. Create the plot
+p
+# 3. Close the file
+dev.off()
+
+
+#________________________________
+#
+###### Count gene description heatmap annotated 2155 only non transposed ######
+#_______________________________
+
+# Load the data (adjust the path to your file location)
+file_path <- "data/paired_blood_fecal_breseq_comparisons.xlsx"
+data <- read_excel(file_path)
+
+# Extract relevant columns
+class_df <- data %>% select(isolate = `isolate`, 
+                            description = `description`, 
+                            annotation = `annotation`,
+                            class = `class`)
+
+# Remove rows where isolate is "FSFC2155_v_FSBL2155"
+class_df <- class_df %>% filter(isolate == "FSFC2155_v_FSBL2155")
+
+# Drop rows with missing values in the isolate or description columns
+class_df <- class_df %>% filter(!is.na(isolate) & !is.na(description))
+
+# Check for "intergenic" in the annotation column and create a new column
+class_df <- class_df %>%
+  mutate(context = ifelse(grepl("intergenic", annotation, ignore.case = TRUE), "Intergenic", "Coding sequence"))
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Tail fiber assembly protein") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+# Create the pivot table
+
+class_df <- class_df[order(class_df$class),]
+class_pivot <- table(class_df$isolate, class_df$description)
+class_pivot <- as.data.frame.matrix(class_pivot)
+
+
+
+# Create annotation data frame for intergenic and class information
+annotation_df <- class_df %>%
+  select(description, context, class) %>%
+  distinct() 
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Tail fiber assembly protein") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+
+annotation_df <- annotation_df %>% 
+  column_to_rownames("description") 
+
+
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df <- annotation_df[colnames(class_pivot), , drop = FALSE]
+
+# Define annotation colors
+annotation_colors <- list(
+  context = c("Intergenic" = "red", "Coding sequence" = "blue"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(annotation_df$class))), unique(annotation_df$class))
+)
+
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         annotation_col = annotation_df,
+         annotation_colors = annotation_colors)
+
+# Custom color palette: Reds, Oranges, and Yellows
+custom_colors <- colorRampPalette(c("#FFFFFF","#FBF5BB", "#FADF9F", "#F8B877", "#D37A5A", "#A84451"))(100)
+
+cols <- brewer.pal(9, "YlOrRd")
+
+
+# Generate the heatmap with annotations
+p = pheatmap(class_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_col = annotation_df,
+         annotation_colors = annotation_colors)
+
+##_______________
+#
+## Transpose 
+##_______________
+
+unique(class_df$description)
+  
+sub_samp_ordered <- class_df[order(class_df$class),]
+
+sub_samp_ordered_class <- unique(sub_samp_ordered$description)
+
+sub_samp_ordered_anno <- unique(sub_samp_ordered$class)
+
+# Reorder columns based on the custom order
+ordered_class_pivot <- class_pivot[, match(sub_samp_ordered_class, colnames(class_pivot))]
+
+annotation_colors <- list(
+  context = c("Intergenic" = "#CAB2D6", "Coding sequence" = "#6A3E9A"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(sub_samp_ordered_anno))), unique(sub_samp_ordered_anno))
+)
+
+
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df <- annotation_df[colnames(ordered_class_pivot), , drop = FALSE]
+
+pheatmap(ordered_class_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_col = annotation_df,
+         annotation_colors = annotation_colors)
+
+p
+
+
+
+
+
+# Transpose the pivot table
+ordered_class_pivot_t <- t(ordered_class_pivot)
+
+pheatmap(ordered_class_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_row = annotation_df,
+         annotation_colors = annotation_colors)
+
+p = pheatmap(ordered_class_pivot_t, 
+             cluster_rows = FALSE, 
+             cluster_cols = FALSE,
+             display_numbers = FALSE, 
+             main = "Heatmap of Predicted Mutations",
+             fontsize_number = 8,
+             color = custom_colors,
+             border_color = "black",
+             annotation_row = annotation_df,
+             annotation_colors = annotation_colors)
+
+
+
+
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "breseq count gene description heatmap annotated 2155 only transposed 30-Jul-2024.png"
+#
+png(IMAGE.NAME, 
+    width = 450, 
+    height = 1500, 
+    res = 400, 
+    units = "mm")
+# 2. Create the plot
+p
+# 3. Close the file
+dev.off()
+
+#________________________________
+#
+###### Annotated heatmap ######
+#_______________________________
+
+
+
+# Load the data (adjust the path to your file location)
+file_path <- "data/paired_blood_fecal_breseq_comparisons.xlsx"
+data <- read_excel(file_path)
+
+# Extract relevant columns
+# Extract relevant columns
+mutations_df <- data %>%  select(isolate = `isolate`, 
+                                                     description = `description`, 
+                                                     annotation = `annotation`,
+                                                     class = `class`)
+
+# Drop rows with missing values in the isolate or description columns
+mutations_df <- mutations_df %>% filter(!is.na(isolate) & !is.na(description))
+
+# Ensure unique descriptions for "hypothetical protein" and handle duplicates
+mutations_df <- mutations_df %>%
+  group_by(description) %>%
+  mutate(description = ifelse(description == "hypothetical protein" | duplicated(description),
+                              paste(description, row_number(), sep = "_"), 
+                              description)) %>%
+  ungroup()
+
+# Check for "intergenic" in the annotation column and create a new column
+mutations_df <- mutations_df %>%
+  mutate(intergenic = ifelse(grepl("intergenic", annotation, ignore.case = TRUE), "Intergenic", "Non-intergenic"))
+
+# Create the pivot table
+mutations_pivot <- table(mutations_df$isolate, mutations_df$description)
+mutations_pivot <- as.data.frame.matrix(mutations_pivot)
+
+# Convert counts to binary presence/absence
+mutations_pivot[mutations_pivot > 0] <- 1
+
+# Create annotation data frame for intergenic information
+annotation_df <- mutations_df %>%
+  select(description, intergenic) %>%
+  distinct() %>%
+  column_to_rownames("description")
+
+# Transpose the pivot table
+mutations_pivot_t <- t(mutations_pivot)
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df <- annotation_df[rownames(mutations_pivot_t), , drop = FALSE]
+
+# Define annotation colors
+annotation_colors <- list(
+  intergenic = c("Intergenic" = "red", "Non-intergenic" = "blue")
+)
+
+# Generate the heatmap with annotations
+pheatmap(mutations_pivot_t, 
+         cluster_rows = TRUE, 
+         cluster_cols = TRUE,
+         display_numbers = TRUE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         annotation_row = annotation_df,
+         annotation_colors = annotation_colors)
+
+
+
+
+
+
+
+#________________________________
+#
+###### gene mutations heatmap with intergenic heatmap ######
+#_______________________________
+
+# Load the data (adjust the path to your file location)
+file_path <- "data/paired_blood_fecal_breseq_comparisons.xlsx"
+data <- read_excel(file_path)
+
+# Extract relevant columns
+mutations_df <- data %>%  select(isolate = `isolate`, 
+                                 description = `description`, 
+                                 annotation = `annotation`,
+                                 class = `class`)
+
+# Drop rows with missing values in the isolate or description columns
+mutations_df <- mutations_df %>% filter(!is.na(isolate) & !is.na(description))
+
+# Ensure unique descriptions for "hypothetical protein" and handle duplicates
+mutations_df <- mutations_df %>%
+  group_by(description) %>%
+  mutate(description = ifelse(description == "hypothetical protein" | duplicated(description),
+                              paste(description, row_number(), sep = "_"), 
+                              description)) %>%
+  ungroup()
+
+# Check for "intergenic" in the annotation column and create a new column
+mutations_df <- mutations_df %>%
+  mutate(intergenic = ifelse(grepl("intergenic", annotation, ignore.case = TRUE), "Intergenic", "Non-intergenic"))
+
+# Create the pivot table
+mutations_pivot <- table(mutations_df$isolate, mutations_df$description)
+mutations_pivot <- as.data.frame.matrix(mutations_pivot)
+
+# Convert counts to binary presence/absence
+# mutations_pivot[mutations_pivot > 0] <- 1
+
+# Create annotation data frame for intergenic and class information
+annotation_df <- mutations_df %>%
+  select(description, intergenic, class) %>%
+  distinct() %>%
+  column_to_rownames("description")
+
+# Transpose the pivot table
+mutations_pivot_t <- t(mutations_pivot)
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df <- annotation_df[rownames(mutations_pivot_t), , drop = FALSE]
+
+# Define annotation colors
+annotation_colors <- list(
+  intergenic = c("Intergenic" = "red", "Non-intergenic" = "blue"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(annotation_df$class))), unique(annotation_df$class))
+)
+
+# Generate the heatmap with annotations
+pheatmap(mutations_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         annotation_row = annotation_df,
+         annotation_colors = annotation_colors)
+
+# Transpose the pivot table
+m_pivot_t <- t(m_pivot)
+
+
+# Generate the heatmap with transposed data
+pheatmap(m_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Predicted gene class from breseq",
+         fontsize_number = 8, 
+         border_color = "black")
+
+# Custom color palette: Reds, Oranges, and Yellows
+custom_colors <- colorRampPalette(c("#FFFFFF","#FBF5BB", "#FADF9F", "#F8B877", "#D37A5A", "#A84451"))(100)
+
+cols <- brewer.pal(9, "YlOrRd")
+
+# Generate the heatmap with transposed data
+pheatmap(m_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Predicted gene class from breseq",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black")
+
+
+
+
+
+
+
+#________________________________
+#
+###### Count gene description heatmap annotated minus 2155 non transposed ######
+#_______________________________
+
+# Load the data (adjust the path to your file location)
+file_path <- "data/paired_blood_fecal_breseq_comparisons.xlsx"
+file_path <- "data/paired_blood_fecal_breseq_comparisons_updated_with_unicycler.xlsx"
+data <- read_excel(file_path)
+
+# Extract relevant columns
+class_df <- data %>% select(isolate = `isolate`, 
+                            description = `description`, 
+                            annotation = `annotation`,
+                            class = `class`)
+
+# Remove rows where isolate is "FSFC2155_v_FSBL2155"
+class_df <- class_df %>% filter(isolate != "FSFC2155_v_FSBL2155")
+
+# Drop rows with missing values in the isolate or description columns
+class_df <- class_df %>% filter(!is.na(isolate) & !is.na(description))
+
+# Check for "intergenic" in the annotation column and create a new column
+class_df <- class_df %>%
+  mutate(context = ifelse(grepl("intergenic", annotation, ignore.case = TRUE), "Intergenic", "Coding sequence"))
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Tail fiber assembly protein") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+# Create the pivot table
+class_pivot <- table(class_df$isolate, class_df$description)
+class_pivot <- as.data.frame.matrix(class_pivot)
+
+# Create annotation data frame for intergenic and class information
+annotation_df <- class_df %>%
+  select(description, context, class) %>%
+  distinct() 
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Tail fiber assembly protein") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+
+
+annotation_df <- annotation_df %>% 
+  column_to_rownames("description") 
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df <- annotation_df[colnames(class_pivot), , drop = FALSE]
+
+# Define annotation colors
+annotation_colors <- list(
+  context = c("Intergenic" = "red", "Coding sequence" = "blue"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(annotation_df$class))), unique(annotation_df$class))
+)
+
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         annotation_col = annotation_df,
+         annotation_colors = annotation_colors)
+
+# Custom color palette: Reds, Oranges, and Yellows
+custom_colors <- colorRampPalette(c("#FFFFFF","#FBF5BB", "#FADF9F", "#F8B877", "#D37A5A", "#A84451"))(100)
+
+cols <- brewer.pal(9, "YlOrRd")
+
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = cols,
+         border_color = "black",
+         annotation_col = annotation_df,
+         annotation_colors = annotation_colors)
+
+#________________________________
+#
+# reorder the matrix based in the annotation
+#________________________________
+
+sub_samp_ordered <- class_df[order(class_df$class),]
+
+sub_samp_ordered_class <- unique(sub_samp_ordered$description)
+
+sub_samp_ordered_anno <- unique(sub_samp_ordered$class)
+
+# Reorder columns based on the custom order
+ordered_class_pivot <- class_pivot[, match(sub_samp_ordered_class, colnames(class_pivot))]
+
+annotation_colors <- list(
+  context = c("Intergenic" = "#CAB2D6", "Coding sequence" = "#6A3E9A"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(sub_samp_ordered_anno))), unique(sub_samp_ordered_anno))
+)
+
+
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df <- annotation_df[colnames(ordered_class_pivot), , drop = FALSE]
+
+pheatmap(ordered_class_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_col = annotation_df,
+         annotation_colors = annotation_colors)
+
+p
+
+
+
+
+
+# Transpose the pivot table
+ordered_class_pivot_t <- t(ordered_class_pivot)
+
+pheatmap(ordered_class_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_row = annotation_df,
+         annotation_colors = annotation_colors)
+
+
+
+
+#________________________________
+#
+###### EGGNOG gene mutations heatmap with intergenic heatmap minus 2155 ######
+#_______________________________
+
+
+
+# Load the data (adjust the path to your file location)
+file_path <- "data/paired_blood_fecal_breseq_comparisons.xlsx"
+file_path <- "data/paired_blood_fecal_breseq_comparisons_updated_with_unicycler.xlsx"
+data <- read_excel(file_path)
+
+# Extract relevant columns
+mutations_df_eggnog <- data %>%  select(isolate = `isolate`, 
+                                 description = `description`, 
+                                 annotation = `annotation`,
+                                 class = `COG_class`)
+
+# Remove rows where isolate is "FSFC2155_v_FSBL2155"
+mutations_df_eggnog <- mutations_df_eggnog %>% filter(isolate != "FSFC2155_v_FSBL2155")
+
+# Drop rows with missing values in the isolate or description columns
+mutations_df_eggnog <- mutations_df_eggnog %>% filter(!is.na(isolate) & !is.na(description))
+
+# Ensure unique descriptions for "hypothetical protein" and handle duplicates
+mutations_df_eggnog <- mutations_df_eggnog %>%
+  group_by(description) %>%
+  mutate(description = ifelse(description == "hypothetical protein" | duplicated(description),
+                              paste(description, row_number(), sep = "_"), 
+                              description)) %>%
+  ungroup()
+
+# Check for "intergenic" in the annotation column and create a new column
+mutations_df_eggnog <- mutations_df_eggnog %>%
+  mutate(intergenic = ifelse(grepl("intergenic", annotation, ignore.case = TRUE), "Intergenic", "Coding sequence"))
+
+# Create the pivot table
+mutations_pivot_eggnog <- table(mutations_df_eggnog$isolate, mutations_df_eggnog$description)
+mutations_pivot_eggnog <- as.data.frame.matrix(mutations_pivot_eggnog)
+
+# Convert counts to binary presence/absence
+# mutations_pivot_eggnog[mutations_pivot_eggnog > 0] <- 1
+
+# Create annotation data frame for intergenic and class information
+annotation_df_eggnog <- mutations_df_eggnog %>%
+  select(description, intergenic, class) %>%
+  distinct() %>%
+  column_to_rownames("description")
+
+# Transpose the pivot table
+mutations_pivot_eggnog_t <- t(mutations_pivot_eggnog)
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df_eggnog <- annotation_df_eggnog[rownames(mutations_pivot_eggnog_t), , drop = FALSE]
+
+unique(annotation_df_eggnog$class)
+
+# Define annotation colors
+annotation_colors <- list(
+  intergenic = c("Intergenic" = "red", "Coding sequence" = "blue"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(annotation_df_eggnog$class))), unique(annotation_df_eggnog$class))
+)
+
+# Generate the heatmap with annotations
+pheatmap(mutations_pivot_eggnog_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         annotation_row = annotation_df_eggnog,
+         annotation_colors = annotation_colors)
+
+
+# Custom color palette: Reds, Oranges, and Yellows
+custom_colors <- colorRampPalette(c("#FFFFFF","#FBF5BB", "#FADF9F", "#F8B877", "#D37A5A", "#A84451"))(100)
+
+cols <- brewer.pal(9, "YlOrRd")
+
+# Generate the heatmap with transposed data
+pheatmap(mutations_pivot_eggnog_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Predicted gene class from breseq",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_row = annotation_df_eggnog,
+         annotation_colors = annotation_colors)
+
+
+#________________________________
+#
+# reorder the matrix based in the annotation
+#________________________________
+
+
+
+sub_samp_ordered <- mutations_df_eggnog[order(mutations_df_eggnog$class),]
+
+sub_samp_ordered_mutations <- unique(sub_samp_ordered$description)
+
+sub_samp_ordered_anno <- unique(sub_samp_ordered$class)
+
+# Reorder columns based on the custom order
+ordered_mutations_pivot_eggnog <- mutations_pivot_eggnog[, match(sub_samp_ordered_mutations, colnames(mutations_pivot_eggnog))]
+
+annotation_colors <- list(
+  context = c("Intergenic" = "#CAB2D6", "Coding sequence" = "#6A3E9A"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(sub_samp_ordered_anno))), unique(sub_samp_ordered_anno))
+)
+
+
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df_eggnog <- annotation_df_eggnog[colnames(ordered_mutations_pivot_eggnog), , drop = FALSE]
+
+pheatmap(ordered_mutations_pivot_eggnog, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_col = annotation_df_eggnog,
+         annotation_colors = annotation_colors)
+
+p
+
+
+# Transpose the pivot table
+ordered_mutations_pivot_eggnog_t <- t(ordered_mutations_pivot_eggnog)
+
+pheatmap(ordered_mutations_pivot_eggnog_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_roq = annotation_df_eggnog,
+         annotation_colors = annotation_colors)
+
+
+
+
+
+
+
+
+#________________________________
+#
+###### Count gene description with class and eggNOG class heatmap annotated minus 2155 transposed ######
+#_______________________________
+
+# Load the data (adjust the path to your file location)
+file_path <- "data/paired_blood_fecal_breseq_comparisons.xlsx"
+file_path <- "data/paired_blood_fecal_breseq_comparisons_updated_with_unicycler.xlsx"
+file_path <- "data/paired_blood_fecal_breseq_comparisons_updated_with_unicycler_for_R.xlsx"
+data <- read_excel(file_path)
+
+# Extract relevant columns
+class_df <- data %>% select(isolate = `isolate`, 
+                            description = `description`, 
+                            annotation = `annotation`,
+                            class = `class`,
+                            COG_class = `COG_class`)
+
+# Remove rows where isolate is "FSFC2155_v_FSBL2155"
+class_df <- class_df %>% filter(isolate != "FSFC2155_v_FSBL2155")
+
+# Drop rows with missing values in the isolate or description columns
+class_df <- class_df %>% filter(!is.na(isolate) & !is.na(description))
+
+# Check for "intergenic" in the annotation column and create a new column
+class_df <- class_df %>%
+  mutate(context = ifelse(grepl("intergenic", annotation, ignore.case = TRUE), "Intergenic", "Coding sequence"))
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Tail fiber assembly protein") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "beta‑galactosidase (EC 3.2.1.23)") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "beta‑galactosidase (EC 3.2.1.23) (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "beta‑galactosidase (EC 3.2.1.23) (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Hypothetical protein") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Hypothetical protein (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Hypothetical protein (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Phage tail fiber, side tail fiber protein Stf") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Phage tail fiber, side tail fiber protein Stf (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Phage tail fiber, side tail fiber protein Stf (CDS)"
+    }
+  }
+}
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49)") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49) (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49) (CDS)"
+    }
+  }
+}
+
+
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Transcriptional repressor of the lac operon") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Transcriptional repressor of the lac operon (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Transcriptional repressor of the lac operon (CDS)"
+    }
+  }
+}
+
+
+
+# Create the pivot table
+class_pivot <- table(class_df$isolate, class_df$description)
+class_pivot <- as.data.frame.matrix(class_pivot)
+
+# Create annotation data frame for intergenic and class information
+annotation_df <- class_df %>%
+  select(description, context, class, COG_class) %>%
+  distinct() 
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Tail fiber assembly protein") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "beta‑galactosidase (EC 3.2.1.23)") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "beta‑galactosidase (EC 3.2.1.23) (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "beta‑galactosidase (EC 3.2.1.23) (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Hypothetical protein") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Hypothetical protein (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Hypothetical protein (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Phage tail fiber, side tail fiber protein Stf") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Phage tail fiber, side tail fiber protein Stf (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Phage tail fiber, side tail fiber protein Stf (CDS)"
+    }
+  }
+}
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49)") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49) (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49) (CDS)"
+    }
+  }
+}
+
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Transcriptional repressor of the lac operon") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Transcriptional repressor of the lac operon (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Transcriptional repressor of the lac operon (CDS)"
+    }
+  }
+}
+
+
+annotation_df <- annotation_df %>% 
+  column_to_rownames("description") 
+
+
+unique(annotation_df$description)
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df <- annotation_df[colnames(class_pivot), , drop = FALSE]
+
+# Define annotation colors
+annotation_colors <- list(
+  context = c("Intergenic" = "red", "Coding sequence" = "blue"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(annotation_df$class))), unique(annotation_df$class))
+)
+
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         annotation_col = annotation_df,
+         annotation_colors = annotation_colors)
+
+# Custom color palette: Reds, Oranges, and Yellows
+custom_colors <- colorRampPalette(c("#FFFFFF","#FBF5BB", "#FADF9F", "#F8B877", "#D37A5A", "#A84451"))(100)
+
+
+
+cols <- brewer.pal(9, "YlOrRd")
+
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = cols,
+         border_color = "black",
+         annotation_col = annotation_df,
+         annotation_colors = annotation_colors,
+         angle_col = 45)
+
+#________________________________
+#
+# reorder the matrix based in the annotation
+#________________________________
+
+sub_samp_ordered <- class_df[order(class_df$class),]
+
+sub_samp_ordered_class <- unique(sub_samp_ordered$description)
+
+sub_samp_ordered_anno <- unique(sub_samp_ordered$class)
+
+# Reorder columns based on the custom order
+ordered_class_pivot <- class_pivot[, match(sub_samp_ordered_class, colnames(class_pivot))]
+
+annotation_colors <- list(
+  context = c("Intergenic" = "#CAB2D6", "Coding sequence" = "#6A3E9A"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(sub_samp_ordered_anno))), unique(sub_samp_ordered_anno))
+)
+
+
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df <- annotation_df[colnames(ordered_class_pivot), , drop = FALSE]
+
+pheatmap(ordered_class_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_col = annotation_df,
+         annotation_colors = annotation_colors,
+         angle_col = 45)
+
+p
+
+
+
+
+
+# Transpose the pivot table
+ordered_class_pivot_t <- t(ordered_class_pivot)
+
+pheatmap(ordered_class_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_row = annotation_df,
+         annotation_colors = annotation_colors)
+
+p = pheatmap(ordered_class_pivot_t, 
+             cluster_rows = FALSE, 
+             cluster_cols = FALSE,
+             display_numbers = FALSE, 
+             main = "Heatmap of Predicted Mutations",
+             fontsize_number = 8,
+             color = custom_colors,
+             border_color = "black",
+             annotation_row = annotation_df,
+             annotation_colors = annotation_colors)
+
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "Count gene description with class and eggNOG class heatmap annotated minus 2155 transposed.png"
+#
+png(IMAGE.NAME, 
+    width = 1000, 
+    height = 1900, 
+    res = 300, 
+    units = "mm")
+# 2. Create the plot
+p
+# 3. Close the file
+dev.off()
+
+
+
+#________________________________
+
+
+#________________________________
+#
+###### Count gene description with class and eggNOG class heatmap annotated ONLY 2155 transposed ######
+#_______________________________
+
+# Load the data (adjust the path to your file location)
+file_path <- "data/paired_blood_fecal_breseq_comparisons.xlsx"
+file_path <- "data/paired_blood_fecal_breseq_comparisons_updated_with_unicycler.xlsx"
+file_path <- "data/paired_blood_fecal_breseq_comparisons_updated_with_unicycler_for_R.xlsx"
+data <- read_excel(file_path)
+
+# Extract relevant columns
+class_df <- data %>% select(isolate = `isolate`, 
+                            description = `description`, 
+                            annotation = `annotation`,
+                            class = `class`,
+                            COG_class = `COG_class`)
+
+# Remove rows where isolate is "FSFC2155_v_FSBL2155"
+class_df <- class_df %>% filter(isolate == "FSFC2155_v_FSBL2155")
+
+# Drop rows with missing values in the isolate or description columns
+class_df <- class_df %>% filter(!is.na(isolate) & !is.na(description))
+
+# Check for "intergenic" in the annotation column and create a new column
+class_df <- class_df %>%
+  mutate(context = ifelse(grepl("intergenic", annotation, ignore.case = TRUE), "Intergenic", "Coding sequence"))
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Tail fiber assembly protein") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "beta‑galactosidase (EC 3.2.1.23)") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "beta‑galactosidase (EC 3.2.1.23) (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "beta‑galactosidase (EC 3.2.1.23) (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Hypothetical protein") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Hypothetical protein (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Hypothetical protein (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Phage tail fiber, side tail fiber protein Stf") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Phage tail fiber, side tail fiber protein Stf (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Phage tail fiber, side tail fiber protein Stf (CDS)"
+    }
+  }
+}
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49)") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49) (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49) (CDS)"
+    }
+  }
+}
+
+
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Transcriptional repressor of the lac operon") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Transcriptional repressor of the lac operon (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Transcriptional repressor of the lac operon (CDS)"
+    }
+  }
+}
+
+order(unique(class_df$description)
+
+# Create the pivot table
+class_pivot <- table(class_df$isolate, class_df$description)
+class_pivot <- as.data.frame.matrix(class_pivot)
+
+# Create annotation data frame for intergenic and class information
+annotation_df <- class_df %>%
+  select(description, context, class, COG_class) %>%
+  distinct() 
+
+# Create annotation data frame for intergenic and class information
+annotation_df <- class_df %>%
+  select(description, class, COG_class) %>%
+  distinct() 
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Tail fiber assembly protein") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "beta‑galactosidase (EC 3.2.1.23)") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "beta‑galactosidase (EC 3.2.1.23) (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "beta‑galactosidase (EC 3.2.1.23) (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Hypothetical protein") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Hypothetical protein (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Hypothetical protein (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Phage tail fiber, side tail fiber protein Stf") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Phage tail fiber, side tail fiber protein Stf (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Phage tail fiber, side tail fiber protein Stf (CDS)"
+    }
+  }
+}
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49)") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49) (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49) (CDS)"
+    }
+  }
+}
+
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Transcriptional repressor of the lac operon") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Transcriptional repressor of the lac operon (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Transcriptional repressor of the lac operon (CDS)"
+    }
+  }
+}
+
+
+
+‘5‑methyl‑dCTP pyrophosphohydrolase (EC 3.6.1.‑)’, 
+‘Hypothetical protein (CDS)’, 
+‘Hypothetical protein (intergenic)’, 
+‘Iron(III) dicitrate transmembrane sensor protein FecR’, 
+‘Iron(III) dicitrate transport ATP‑binding protein FecE (TC 3.A.1.14.1)’, 
+‘Iron(III) dicitrate transport protein FecA’, 
+‘Mobile element protein’, 
+‘RNA polymerase sigma factor FecI’, 
+‘Transcription regulation, LacI/PurR family’, 
+‘Transposase’, 
+‘Uncharacterized MFS‑type transporter’ 
+
+
+annotation_df <- annotation_df %>% 
+  column_to_rownames("description") 
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df <- annotation_df[colnames(class_pivot), , drop = FALSE]
+
+# Define annotation colors
+annotation_colors <- list(
+  context = c("Intergenic" = "red", "Coding sequence" = "blue"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(annotation_df$class))), unique(annotation_df$class))
+)
+
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         annotation_col = annotation_df,
+         annotation_colors = annotation_colors)
+
+# Custom color palette: Reds, Oranges, and Yellows
+custom_colors <- colorRampPalette(c("#FFFFFF","#FBF5BB", "#FADF9F", "#F8B877", "#D37A5A", "#A84451"))(100)
+
+
+
+cols <- brewer.pal(9, "YlOrRd")
+
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = cols,
+         border_color = "black",
+         annotation_col = annotation_df,
+         annotation_colors = annotation_colors,
+         angle_col = 45)
+
+#________________________________
+#
+# reorder the matrix based in the annotation
+#________________________________
+
+sub_samp_ordered <- class_df[order(class_df$class),]
+
+sub_samp_ordered_class <- unique(sub_samp_ordered$description)
+
+sub_samp_ordered_anno <- unique(sub_samp_ordered$class)
+
+# Reorder columns based on the custom order
+ordered_class_pivot <- class_pivot[, match(sub_samp_ordered_class, colnames(class_pivot))]
+
+annotation_colors <- list(
+  context = c("Intergenic" = "#CAB2D6", "Coding sequence" = "#6A3E9A"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(sub_samp_ordered_anno))), unique(sub_samp_ordered_anno))
+)
+
+
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df <- annotation_df[colnames(ordered_class_pivot), , drop = FALSE]
+
+pheatmap(ordered_class_pivot, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_col = annotation_df,
+         annotation_colors = annotation_colors,
+         angle_col = 45)
+
+p
+
+
+
+
+
+# Transpose the pivot table
+ordered_class_pivot_t <- t(ordered_class_pivot)
+
+pheatmap(ordered_class_pivot_t, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         border_color = "black",
+         annotation_row = annotation_df,
+         annotation_colors = annotation_colors)
+
+p = pheatmap(ordered_class_pivot_t, 
+             cluster_rows = FALSE, 
+             cluster_cols = FALSE,
+             display_numbers = FALSE, 
+             main = "Heatmap of Predicted Mutations",
+             fontsize_number = 8,
+             color = custom_colors,
+             border_color = "black",
+             annotation_row = annotation_df,
+             annotation_colors = annotation_colors)
+
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "Count gene description with class and eggNOG class heatmap annotated minus 2155 transposed.png"
+#
+png(IMAGE.NAME, 
+    width = 1000, 
+    height = 1900, 
+    res = 300, 
+    units = "mm")
+# 2. Create the plot
+p
+# 3. Close the file
+dev.off()
+
+
+
+#________________________________
+
+
+
+
+
+
+
+
+#________________________________
+#
+###### Count gene description with class, eggNOG, synonymous mutations heatmap annotated minus 2155 transposed ######
+#_______________________________
+
+# Load the data (adjust the path to your file location)
+file_path <- "data/paired_blood_fecal_breseq_comparisons.xlsx"
+file_path <- "data/paired_blood_fecal_breseq_comparisons_updated_with_unicycler.xlsx"
+file_path <- "data/paired_blood_fecal_breseq_comparisons_updated_with_unicycler_for_R.xlsx"
+data <- read_excel(file_path)
+
+# Extract relevant columns
+class_df <- data %>% select(isolate = `isolate`, 
+                            description = `description`, 
+                            annotation = `annotation`,
+                            class = `class`,
+                            COG_class = `COG_class`)
+
+# Remove rows where isolate is "FSFC2155_v_FSBL2155"
+class_df <- class_df %>% filter(isolate != "FSFC2155_v_FSBL2155")
+
+# Drop rows with missing values in the isolate or description columns
+class_df <- class_df %>% filter(!is.na(isolate) & !is.na(description))
+
+# Check for "intergenic" in the annotation column and create a new column
+class_df <- class_df %>%
+  mutate(context = ifelse(grepl("intergenic", annotation, ignore.case = TRUE), "Intergenic", "Coding sequence")
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Tail fiber assembly protein") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "beta‑galactosidase (EC 3.2.1.23)") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "beta‑galactosidase (EC 3.2.1.23) (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "beta‑galactosidase (EC 3.2.1.23) (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Hypothetical protein") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Hypothetical protein (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Hypothetical protein (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Phage tail fiber, side tail fiber protein Stf") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Phage tail fiber, side tail fiber protein Stf (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Phage tail fiber, side tail fiber protein Stf (CDS)"
+    }
+  }
+}
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49)") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49) (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49) (CDS)"
+    }
+  }
+}
+
+
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(class_df$description)) {
+  if (class_df$description[i] == "Transcriptional repressor of the lac operon") {
+    if (class_df$context[i] == "Intergenic") {
+      class_df$description[i] <- "Transcriptional repressor of the lac operon (intergenic)"
+    } else if (class_df$context[i] == "Coding sequence") {
+      class_df$description[i] <- "Transcriptional repressor of the lac operon (CDS)"
+    }
+  }
+}
+
+
+# add a new column for synonmous
+
+library(dplyr)
+library(stringr)
+
+
+# Add a new column for mutation type
+class_df <- class_df %>%
+  mutate(mutation_type = case_when(
+    str_detect(annotation, "^intergenic") ~ "intergenic", # If it starts with "intergenic", label as intergenic
+    str_detect(annotation, "^coding") ~ "coding_undefined", # If it starts with "coding", label as coding
+    str_detect(annotation, "^[A-Z](\\d+)[A-Z*]") ~ ifelse(
+      str_sub(annotation, 1, 1) == str_sub(annotation, nchar(str_extract(annotation, "^[A-Z](\\d+)[A-Z*]")), nchar(str_extract(annotation, "^[A-Z](\\d+)[A-Z*]"))),
+      "synonymous",
+      "non-synonymous"
+    ),
+    TRUE ~ NA_character_
+  ))
+
+# Print result
+print(class_df)
+print(class_df$mutation_type)
+
+# Create the pivot table
+class_pivot <- table(class_df$isolate, class_df$description)
+class_pivot <- as.data.frame.matrix(class_pivot)
+
+# Create annotation data frame for intergenic and class information
+annotation_df <- class_df %>%
+  select(description, context, class, COG_class, mutation_type) %>%
+  distinct() 
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Tail fiber assembly protein") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "beta‑galactosidase (EC 3.2.1.23)") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "beta‑galactosidase (EC 3.2.1.23) (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "beta‑galactosidase (EC 3.2.1.23) (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Hypothetical protein") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Hypothetical protein (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Hypothetical protein (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Phage tail fiber, side tail fiber protein Stf") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Phage tail fiber, side tail fiber protein Stf (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Phage tail fiber, side tail fiber protein Stf (CDS)"
+    }
+  }
+}
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49)") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49) (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49) (CDS)"
+    }
+  }
+}
+
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Transcriptional repressor of the lac operon") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Transcriptional repressor of the lac operon (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Transcriptional repressor of the lac operon (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Tail fiber assembly protein") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Tail fiber assembly protein (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "beta‑galactosidase (EC 3.2.1.23)") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "beta‑galactosidase (EC 3.2.1.23) (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "beta‑galactosidase (EC 3.2.1.23) (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Hypothetical protein") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Hypothetical protein (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Hypothetical protein (CDS)"
+    }
+  }
+}
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Phage tail fiber, side tail fiber protein Stf") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Phage tail fiber, side tail fiber protein Stf (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Phage tail fiber, side tail fiber protein Stf (CDS)"
+    }
+  }
+}
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49)") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49) (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Retron‑type RNA‑directed DNA polymerase (EC 2.7.7.49) (CDS)"
+    }
+  }
+}
+
+
+
+# Iterate through the duplicates and update based on the "annotation" value
+for (i in seq_along(annotation_df$description)) {
+  if (annotation_df$description[i] == "Transcriptional repressor of the lac operon") {
+    if (annotation_df$context[i] == "Intergenic") {
+      annotation_df$description[i] <- "Transcriptional repressor of the lac operon (intergenic)"
+    } else if (annotation_df$context[i] == "Coding sequence") {
+      annotation_df$description[i] <- "Transcriptional repressor of the lac operon (CDS)"
+    }
+  }
+}
+
+
+
+######  synonymous/non-synonymous mutation selection ####
+
+
+
+unique(annotation_df$mutation_type)
+
+annotation_df_synon = annotation_df %>% filter(mutation_type == "synonymous")
+annotation_df_non_synon = annotation_df %>% filter(mutation_type == "non-synonymous")
+annotation_df_intergenic = annotation_df %>% filter(mutation_type == "intergenic")
+annotation_df_coding_undef =  annotation_df %>% filter(mutation_type == "coding_undefined")
+
+
+##################### synonymous  ######
+
+genes_synon <- intersect(colnames(class_pivot), annotation_df_synon$description)
+class_pivot_synon = class_pivot %>% select(all_of(genes_synon))
+
+
+annotation_df_synon <- annotation_df_synon %>% 
+  column_to_rownames("description")
+
+
+unique(annotation_df_synon$description)
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df_synon <- annotation_df_synon[colnames(class_pivot), , drop = FALSE]
+
+# remove context as redudnant 
+annotation_df_synon = annotation_df_synon %>% select(-context, -mutation_type)
+
+# Define annotation colors
+annotation_colors <- list(
+  context = c("Intergenic" = "red", "Coding sequence" = "blue"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(annotation_df_synon$class))), unique(annotation_df_synon$class))
+)
+
+
+# Yellow gradient
+yellow_colors <- colorRampPalette(c("#FFFACD", "#FFE680", "#FFD700", "#DAA520", "#8B7500"))(100)
+
+
+
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot_synon, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = yellow_colors,
+         annotation_col = annotation_df_synon,
+         annotation_colors = annotation_colors,
+         angle_col = 45)
+
+
+
+# Transpose the pivot table
+class_pivot_synon_t <- t(class_pivot_synon)
+
+
+synon_p = pheatmap(class_pivot_synon_t, 
+             cluster_rows = FALSE, 
+             cluster_cols = FALSE,
+             display_numbers = FALSE, 
+             main = "synonymous mutations",
+             fontsize_number = 8,
+             color = yellow_colors,
+             border_color = "black",
+             annotation_row = annotation_df_synon,
+             annotation_colors = annotation_colors)
+
+synon_p
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "Count gene description synon with class and eggNOG class heatmap annotated minus 2155 transposed.png"
+#
+png(IMAGE.NAME, 
+    width = 1000, 
+    height = 1900, 
+    res = 300, 
+    units = "mm")
+# 2. Create the plot
+synon_p
+# 3. Close the file
+dev.off()
+
+
+ggsave("Count gene description synon with class and eggNOG class heatmap annotated minus 2155 transposed.svg", width = 20, height = 12.5, synon_p)
+
+
+synon
+non_synon
+intergenic 
+coding_undefined
+
+##################### non-synonymous ######
+
+annotation_df_synon 
+annotation_df_non_synon
+annotation_df_intergenic
+annotation_df_coding_undef 
+
+unique(annotation_df$mutation_type)
+# [1] "intergenic"       "non-synonymous"   "synonymous"       "coding_undefined"
+
+genes_non_synon <- intersect(colnames(class_pivot), annotation_df_non_synon$description)
+class_pivot_non_synon = class_pivot %>% select(all_of(genes_non_synon))
+
+
+annotation_df_non_synon <- annotation_df_non_synon %>% 
+  column_to_rownames("description")
+
+
+unique(annotation_df_non_synon$description)
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df_non_synon <- annotation_df_non_synon[colnames(class_pivot), , drop = FALSE]
+
+# remove context as redudnant 
+annotation_df_non_synon = annotation_df_non_synon %>% select(-context, -mutation_type)
+
+# Define annotation colors
+annotation_colors <- list(
+  context = c("Intergenic" = "red", "Coding sequence" = "blue"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(annotation_df_non_synon$class))), unique(annotation_df_non_synon$class))
+)
+
+non_synon_cols <- brewer.pal(9, "YlOrRd")
+
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot_non_synon, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         annotation_col = annotation_df_non_synon,
+         annotation_colors = annotation_colors,
+         angle_col = 45)
+
+
+# Red gradient
+red_colors <- colorRampPalette(c("#FFEBEB", "#FFB3B3", "#FF8080", "#E63946", "#990000"))(100)
+
+
+
+
+
+
+non_synon_cols <- brewer.pal(9, "YlOrRd")
+cols <- brewer.pal(9, "YlOrRd")
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot_non_synon, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Non synonomous mutations",
+         fontsize_number = 8,
+         color = red_colors,
+         border_color = "black",
+         annotation_col = annotation_df_non_synon,
+         annotation_colors = annotation_colors,
+         angle_col = 45)
+
+
+# Transpose the pivot table
+class_pivot_non_synon_t <- t(class_pivot_non_synon)
+
+
+non_synon_p = pheatmap(class_pivot_non_synon_t, 
+             cluster_rows = FALSE, 
+             cluster_cols = FALSE,
+             display_numbers = FALSE, 
+             main = "non synonymous mutations",
+             fontsize_number = 8,
+             color = red_colors,
+             border_color = "black",
+             annotation_row = annotation_df_non_synon,
+             annotation_colors = annotation_colors)
+non_synon_p
+
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "Count gene description non synon with class and eggNOG class heatmap annotated minus 2155 transposed.png"
+#
+png(IMAGE.NAME, 
+    width = 1000, 
+    height = 1900, 
+    res = 300, 
+    units = "mm")
+# 2. Create the plot
+p
+# 3. Close the file
+dev.off()
+
+
+ggsave("Count gene description non synon with class and eggNOG class heatmap annotated minus 2155 transposed.svg", width = 20, height = 12.5, non_synon_p)
+
+
+synon
+non_synon
+intergenic 
+coding_undefined
+
+
+
+
+
+
+
+
+##################### INTERGENIC ######
+
+annotation_df_synon 
+annotation_df_non_synon
+annotation_df_intergenic
+annotation_df_coding_undef 
+
+unique(annotation_df$mutation_type)
+# [1] "intergenic"       "non-synonymous"   "synonymous"       "coding_undefined"
+
+genes_non_synon <- intersect(colnames(class_pivot), annotation_df_intergenic$description)
+class_pivot_intergenic = class_pivot %>% select(all_of(genes_intergenic))
+
+
+annotation_df_intergenic <- annotation_df_intergenic %>% 
+  column_to_rownames("description")
+
+
+unique(annotation_df_intergenic$description)
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df_intergenic <- annotation_df_intergenic[colnames(class_pivot), , drop = FALSE]
+
+# remove context as redudnant 
+annotation_df_intergenic = annotation_df_intergenic %>% select(-context, -mutation_type)
+
+# Define annotation colors
+annotation_colors <- list(
+  context = c("Intergenic" = "red", "Coding sequence" = "blue"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(annotation_df_intergenic$class))), unique(annotation_df_intergenic$class))
+)
+
+intergenic_cols <- brewer.pal(9, "YlOrRd")
+
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot_intergenic, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         annotation_col = annotation_df_intergenic,
+         annotation_colors = annotation_colors,
+         angle_col = 45)
+
+
+# Blue gradient
+blue_colors <- colorRampPalette(c("#E6F7FF", "#B3DAF1", "#80BFFF", "#4682B4", "#003366"))(100)
+
+
+intergenic_cols <- brewer.pal(9, "YlOrRd")
+cols <- brewer.pal(9, "YlOrRd")
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot_intergenic, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "intergenic mutations",
+         fontsize_number = 8,
+         color = green_colors,
+         border_color = "black",
+         annotation_col = annotation_df_intergenic,
+         annotation_colors = annotation_colors,
+         angle_col = 45)
+
+
+# Transpose the pivot table
+class_pivot_intergenic_t <- t(class_pivot_intergenic)
+
+
+intergenic_p = pheatmap(class_pivot_intergenic_t, 
+                        cluster_rows = FALSE, 
+                        cluster_cols = FALSE,
+                        display_numbers = FALSE, 
+                        main = "intergenic mutations",
+                        fontsize_number = 8,
+                        color = green_colors,
+                        border_color = "black",
+                        annotation_row = annotation_df_intergenic,
+                        annotation_colors = annotation_colors)
+intergenic_p
+
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "Count gene description intergenic with class and eggNOG class heatmap annotated minus 2155 transposed.png"
+#
+png(IMAGE.NAME, 
+    width = 1000, 
+    height = 1900, 
+    res = 300, 
+    units = "mm")
+# 2. Create the plot
+p
+# 3. Close the file
+dev.off()
+
+
+ggsave("Count gene description intergenic with class and eggNOG class heatmap annotated minus 2155 transposed.svg", width = 20, height = 12.5, intergenic_p)
+
+
+synon
+non_synon
+intergenic 
+coding_undefined
+
+
+
+
+##################### coding_undefined ######
+
+annotation_df_synon 
+annotation_df_non_synon
+annotation_df_intergenic
+annotation_df_coding_undef 
+
+unique(annotation_df$mutation_type)
+# [1] "intergenic"       "non-synonymous"   "synonymous"       "coding_undefined"
+
+genes_non_synon <- intersect(colnames(class_pivot), annotation_df_coding_undefined$description)
+class_pivot_coding_undefined = class_pivot %>% select(all_of(genes_coding_undefined))
+
+
+annotation_df_coding_undefined <- annotation_df_coding_undefined %>% 
+  column_to_rownames("description")
+
+
+unique(annotation_df_coding_undefined$description)
+
+# Ensure the annotation rows are in the same order as the matrix rows
+annotation_df_coding_undefined <- annotation_df_coding_undefined[colnames(class_pivot), , drop = FALSE]
+
+# remove context as redudnant 
+annotation_df_coding_undefined = annotation_df_coding_undefined %>% select(-context, -mutation_type)
+
+# Define annotation colors
+annotation_colors <- list(
+  context = c("coding_undefined" = "red", "Coding sequence" = "blue"),
+  class = setNames(colorRampPalette(brewer.pal(9, "Set1"))(length(unique(annotation_df_coding_undefined$class))), unique(annotation_df_coding_undefined$class))
+)
+
+coding_undefined_cols <- brewer.pal(9, "YlOrRd")
+
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot_coding_undefined, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "Heatmap of Predicted Mutations",
+         fontsize_number = 8,
+         color = custom_colors,
+         annotation_col = annotation_df_coding_undefined,
+         annotation_colors = annotation_colors,
+         angle_col = 45)
+
+
+# Green gradient
+green_colors <- colorRampPalette(c("#E6F9E6", "#B3E6B3", "#80CC80", "#3CB371", "#006400"))(100)
+
+
+coding_undefined_cols <- brewer.pal(9, "YlOrRd")
+cols <- brewer.pal(9, "YlOrRd")
+
+# Generate the heatmap with annotations
+pheatmap(class_pivot_coding_undefined, 
+         cluster_rows = FALSE, 
+         cluster_cols = FALSE,
+         display_numbers = FALSE, 
+         main = "coding_undefined mutations",
+         fontsize_number = 8,
+         color = green_colors,
+         border_color = "black",
+         annotation_col = annotation_df_coding_undefined,
+         annotation_colors = annotation_colors,
+         angle_col = 45)
+
+
+# Transpose the pivot table
+class_pivot_coding_undefined_t <- t(class_pivot_coding_undefined)
+
+
+coding_undefined_p = pheatmap(class_pivot_coding_undefined_t, 
+                       cluster_rows = FALSE, 
+                       cluster_cols = FALSE,
+                       display_numbers = FALSE, 
+                       main = "coding_undefined mutations",
+                       fontsize_number = 8,
+                       color = green_colors,
+                       border_color = "black",
+                       annotation_row = annotation_df_coding_undefined,
+                       annotation_colors = annotation_colors)
+coding_undefined_p
+
+
+# save as png #_____________________________________________________________________________
+#
+IMAGE.NAME = "Count gene description coding_undefined with class and eggNOG class heatmap annotated minus 2155 transposed.png"
+#
+png(IMAGE.NAME, 
+    width = 1000, 
+    height = 1900, 
+    res = 300, 
+    units = "mm")
+# 2. Create the plot
+p
+# 3. Close the file
+dev.off()
+
+
+ggsave("Count gene description coding_undefined with class and eggNOG class heatmap annotated minus 2155 transposed.svg", width = 20, height = 12.5, coding_undefined_p)
+
+
+synon
+non_synon
+intergenic 
+coding_undefined

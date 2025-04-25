@@ -1,0 +1,116 @@
+---
+title: "2: Core genome phylogenetic tree"
+format: html
+---
+
+## Introduction
+
+This tutorial will take *n* genome sequences and construct a SNP based core genome phylogenetic tree. 
+
+## Part 1 - Variant calling in bash
+
+### 1.1: Variant calling with snippy
+
+Create a list of fasta genomes to determine SNPs 
+
+```{bash}
+ls fastas/*.fasta > genomes.txt
+
+cat genomes.txt
+```
+
+Check the list
+
+```{bash}
+cat genomes.txt
+```
+
+Use [`snippy`](https://github.com/tseemann/snippy) to generate all SNPs.
+
+Make a new directory 
+
+```{bash}
+mkdir cgtree
+```
+
+
+Set reference file for SNP calculations. 
+
+```{bash}
+REF=FSFC1386.fasta
+```
+
+Use `sed` to remove `.fastq` from `.txt` file
+
+```{bash}
+sed 's|fastas/||g' genomes.txt > genome_names.txt
+sed -e 's/.fasta//' genomes_names.txt > genome_names.txt
+```
+
+Check the new `.txt` file containing list of genome names
+```{bash}
+cat genome_names.txt
+```
+
+The we use [parallel](https://www.gnu.org/software/parallel/) on our list of genomes to run snippy:
+
+```{bash}
+cat genome_names.txt | parallel snippy --report --outdir cgtree/{}_snps --ref $REF --ctgs fastas/{}.fasta
+```
+
+This produces several files:
+
+#### 3.1.3: Run Snippy-core
+
+Use `snippy-core` from [snippy](https://github.com/tseemann/snippy) to generate core SNPs
+
+```{bash}
+snippy-core --ref $REF --outdir cgtree --prefix core cgtree/*_snps
+```
+
+This produces several files:
+
+* `core.full.aln`: The full core genome alignment in FASTA format.
+* `core.aln`: The core SNP alignment in FASTA format (only variable sites).
+* `core.tab`: A table summarizing the SNP differences.
+
+### 1.2: Recombination site exclusion with gubbins
+
+
+```{bash}
+run_gubbins.py -p gubbins cgtree/clean.full.aln
+```
+
+
+### 1.3: SNP extraction with snp-sites
+
+
+```{bash}
+snp-sites -c cgtree/gubbins.filtered_polymorphic_sites.fasta -o cgtree/filtered_snps.fasta
+```
+
+
+
+## Part 2 - Core genome tree construction in bash
+
+### 2.1: tree construction with IQTree
+
+```{bash}
+# Use modelfinder first
+iqtree -s filtered_snps.fasta -m MF
+
+# Then run the code using this specific model 
+iqtree -s filtered_snps.fasta -m TVM+F+ASC+R2 -keep-ident -pre REFSEQ_HS11286_Klebsiella_TVM+F+ASC+R2 -bb 1000
+```
+
+
+```{bash}
+# or run modelfinder plus
+iqtree -s filtered_snps.fasta -m MFP -keep-ident -pre core_tree_REFSEQ_HS11286_Klebsiella_MF -bb 1000
+```
+
+## Part 3 - Visualising core genome tree 
+
+### 3.1: Visualisation with iTOL
+
+For usage with iTOL (https://itol.embl.de/), the “.contree” should be used. 

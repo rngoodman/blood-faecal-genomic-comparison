@@ -1,0 +1,664 @@
+---
+title: "5: Analysing virulence factor determinants"
+author: "Richard Goodman"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(dev = "png", fig.width = 8, fig.height = 8)
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
+```
+
+## Introduction
+
+This tutorial will take two genome sequences and run variant calling with breseq then visualising the differences as heatmaps in R.
+
+This workflow involves using breseq for variant calling, parsing the results, and visualizing the differences using circlize in R.
+
+## Part 1 - Genome download and virulence factor screening with abricate 
+
+### 1.1: Download files with wget
+
+```{bash, eval=FALSE}
+
+# 9A-1-1
+wget "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/026/119/875/GCF_026119875.1_ASM2611987v1/GCF_026119875.1_ASM2611987v1_genomic.fna.gz"
+# 9A-2-7
+wget "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/026/119/895/GCF_026119895.1_ASM2611989v1/GCF_026119895.1_ASM2611989v1_genomic.fna.gz"
+# 9A 3-9
+wget "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/026/119/915/GCF_026119915.1_ASM2611991v1/GCF_026119915.1_ASM2611991v1_genomic.fna.gz"
+# 9A-4-9
+wget "https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/026/119/955/GCF_026119955.1_ASM2611995v1/GCF_026119955.1_ASM2611995v1_genomic.fna.gz"
+```
+
+### 1.2: Rename files to make data analysis easier
+
+```{bash, eval=FALSE}
+
+mv GCF_026119875.1_ASM2611987v1_genomic.fna.gz 9A-1-1.fna.gz 
+mv GCF_026119895.1_ASM2611989v1_genomic.fna.gz 9A-2-7.fna.gz
+mv GCF_026119915.1_ASM2611991v1_genomic.fna.gz 9A-3-9.fna.gz
+mv GCF_026119955.1_ASM2611995v1_genomic.fna.gz 9A-4-9.fna.gz
+
+```
+
+### 1.3: Unzip all files
+
+```{bash, eval=FALSE}
+
+gunzip *.fna.gz
+
+```
+
+### 1.4: Run abricate on genomes 
+
+Download abricate if you haven't already, then you can run it simply with the following command. 
+
+```{r, eval=FALSE}
+
+abricate --db resfinder --mincov 60 --minid 90 --csv *.fa > all_paired_blood_faecal_hybracter_vfdb_fasta_L60_T90_plus_BSI_indicators.csv
+
+```
+
+## Part 2 - Plotting virulence factor heatmaps in R
+
+### 2.1: Import the data 
+
+Import the data from breseq 
+
+```{r, warning = FALSE, message = FALSE}
+
+library(readr)
+library(dplyr)
+library(tidyr)
+library(pheatmap)
+library(RColorBrewer)
+library(readr)
+library(reshape2)
+library(pheatmap)
+library(RColorBrewer)
+
+# Reading in data
+abricate_output = readr::read_csv("data/all_paired_blood_faecal_hybracter_vfdb_fasta_L60_T90_plus_BSI_indicators.csv")
+
+ab_tab = abricate_output
+
+```
+
+### 2.2: Wrangle abricate dataset
+
+```{r, echo = T, error=FALSE, warning=FALSE, message=FALSE}
+
+rm_duplicates = function(ab_tab)
+{
+  
+  # First Remove duplicates
+  # These cause issues with creating a lit rather than a dataframe
+  # When compared against the database there can sometimes be duplciates 
+  
+  # arrange and group by ab_tab 
+  ab_tab_unique <- ab_tab %>% 
+    arrange(GENE, -`%COVERAGE`) %>% 
+    group_by(GENE)
+  
+  # Check the colnames
+  colnames(ab_tab_unique)
+  
+  # Check the duplicates 
+  duplicated(ab_tab_unique[c("#FILE","GENE")])
+  print("Duplicates found:")
+  print(c(which(duplicated(ab_tab_unique[c("#FILE","GENE")]) == TRUE))) # see which contain duplicates
+  
+  # Remove columns that contain duplicates in FILE, GENE and COVERAGE 
+  ab_tab_unique <- ab_tab[!duplicated(ab_tab_unique[c("#FILE","GENE")]),] #using colnames
+  #ab_tab_unique <- ab_tab_unique[!duplicated(ab_tab_unique[c(1,2)]),] #using col numbers
+  
+  
+  # Check whether duplicates have been delted 
+  print("Duplicates remaining:")
+  print(which(duplicated(ab_tab_unique[c("#FILE","GENE")]) == TRUE)) # see which contain duplicates
+  
+  {
+    return(ab_tab_unique)
+  }
+}
+
+
+# Run function 
+ab_tab_unique = rm_duplicates(ab_tab)
+
+
+mk_count_table = function(ab_tab)
+{
+  # Funtion to make the Abricate table wide 
+  # Create a new value from original ab_tab to wide count table 
+  wide = ab_tab %>% 
+    # select strain, gene and resistance and rename
+    select("#FILE", GENE, RESISTANCE) %>% 
+    # rename 
+    dplyr::rename(gene = "GENE",
+           file = "#FILE",
+           resistance = "RESISTANCE") %>% 
+    # count genes vs strains
+    count(file, gene) %>% 
+    # Convert to wide table with genes as column headers and n as values 
+    pivot_wider(names_from = gene,
+                values_from = n)
+  
+  # Shorten strain names (remove the unnecessary string)
+  wide$file = gsub(".fa", "", wide$file)
+  wide$file = gsub("_assembled.fasta", "", wide$file)
+
+  
+  {
+    return(wide)
+  }
+}
+
+# Run function 
+wide = mk_count_table(ab_tab_unique)
+
+wide$file
+
+wide$file <- gsub("_hybractersta", "", wide$file)
+wide$file <- gsub("_flyesta", "", wide$file)
+wide$file <- gsub("_unicyclersta", "", wide$file)
+
+# check
+wide$file
+
+# Converts to dataframe
+count_to_dataframe = function(wide)
+{
+  wide = wide
+  
+  # make the genenames a variable 
+  rows = wide$file
+  
+  # Remove the file column
+  wide3 = wide %>% select(-file)
+  
+  # name the rows as strains
+  rownames(wide3) = rows
+  
+  # convert to dataframe
+  d = as.data.frame(wide3)
+  
+  # convert na to 0
+  d[is.na(d)] = 0
+  
+  #name rows
+  rownames(d) = rows
+  
+  # convert to matrix
+  df = d
+  
+  
+  {
+    return(df)
+  }
+}
+
+df = count_to_dataframe(wide)
+
+# Converts to matrix
+count_to_mat = function(wide)
+{
+  wide = wide
+  
+  # make the genenames a variable 
+  rows = wide$file
+  
+  # Remove the file column
+  wide3 = wide %>% select(-file)
+  
+  # name the rows as strains
+  rownames(wide3) = rows
+  
+  # convert to dataframe
+  d = as.data.frame(wide3)
+  
+  # convert na to 0
+  d[is.na(d)] <- 0
+  
+  # name rows
+  rownames(d) = rows
+  
+  # convert to matrix
+  mat = as.matrix(d)
+  
+  
+  {
+    return(mat)
+  }
+}
+
+# Run Function 
+mat = count_to_mat(wide)
+
+
+# Check output
+nrow(mat)
+class(mat)
+colnames(mat)
+rownames(mat)
+```
+### 2.3: Plot a basic heatmap 
+
+Next we will select the mutations based
+
+```{r}
+# convert to binary 
+df = count_to_dataframe(wide)
+df <- ifelse(df > 0, 1, 0)
+
+# Generate  basic heatmap
+pheatmap(df)
+```
+
+### 2.3: Plot an annotated heatmap 
+
+```{r, fig.width=20}
+# Generate the heatmap with annotations
+
+isolates = read_csv("data/Isolate_species.csv")
+  
+isolates_df = as.data.frame(isolates)
+
+isolates_df = isolates_df[-1,]
+
+species_colors <- c("K. pneumoniae" = "#DDAD3B", 
+                    "E. coli" = "#9F7831",
+                    "K. quasipneumoniae similipneumoniae" = "#666666")
+
+# Annotation for isolates (y-axis)
+annotation_row <- data.frame(Species = isolates_df$Species)
+rownames(annotation_row) <- isolates_df$Isolate
+
+vfdb_class = read_csv("data/VFDB_classes.csv")
+
+vfdb_class_df = as.data.frame(vfdb_class)
+
+class_colors <- c("Protectins" = "#4B9B7A", 
+                  "Toxins" = "#CA6728", 
+                  "Iron-uptake" = "#D43F88", 
+                  "Adhesins" = "#7470AF")
+
+
+# Annotation for isolates (x-axis)
+
+annotation_col <- data.frame(class = vfdb_class_df$class)
+rownames(annotation_col) <- vfdb_class_df$GENE
+
+# Create a list of annotation colors
+annotation_colors <- list(class = class_colors, Species = species_colors)
+
+
+custom_colors <- colorRampPalette(c("#FFFFFF","#FBF5BB", "#FADF9F", "#F8B877", "#D37A5A", "#A84451"))(6)
+
+
+pheatmap(df, 
+         annotation_col = annotation_col, 
+         annotation_row = annotation_row, 
+         annotation_colors = annotation_colors, 
+         color = custom_colors,
+         show_rownames = TRUE, 
+         show_colnames = TRUE,
+         border_color = "black")
+```
+
+
+## Part 3 - Comparison of virulence factors across datasets in R
+
+### 3.1: Import the data 
+
+Import the data from breseq 
+
+```{r, warning = FALSE, message = FALSE}
+
+# Load necessary libraries
+library(readxl)
+library(readr)
+library(pheatmap)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(RColorBrewer)
+
+# 772 Malawi Kleb Strains
+abricate_output = readr::read_csv("data/all_abricate_773_Ec_Kp_CHL_VFDB_fasta_L60_T90.csv")
+
+ab_tab = abricate_output 
+
+```
+
+```{r}
+#DASSIM <- DASSIM %>% select(matches("^ybt|^irp|^fyu"))
+
+iron_VF <- ab_tab %>% filter(grepl("ybt|fyu|irp", GENE))
+```
+
+
+### 3.2: Wrangle dataset
+
+```{r, echo = T, error=FALSE, warning=FALSE, message=FALSE}
+
+# Remove duplicates 
+ab_tab_unique = rm_duplicates(ab_tab)
+
+# Make count table
+wide = mk_count_table(ab_tab_unique)
+
+# Rename necessary 
+wide$file = gsub("all_spades_assemblies/", "", wide$file)
+wide$file = gsub(".fa", "", wide$file)
+wide$file = gsub(".fasta", "", wide$file)
+wide$file = gsub("_assembledsta", "", wide$file)
+wide$file = gsub("_1_SPAdes_assemblysta", "", wide$file)
+wide$file = gsub("_assembled.fasta", "", wide$file)
+wide$file = gsub("_contigssta", "", wide$file)
+wide$file = gsub("sta", "", wide$file)
+
+# Convert count table to dataframe 
+d = count_to_dataframe(wide)
+
+# Convert count table to matrix
+mat = count_to_mat(wide)
+
+```
+
+
+### 3.3:  Filter for ybt + fyu + irp
+
+```{r}
+
+# Filter the dataframe for the column "ybt"
+#filtered_df <- d[, grepl("ybt", colnames(d)), drop = FALSE]
+#filtered_df$seq = rownames(filtered_df)
+
+# Filter the dataframe for columns containing "ybt", "fyu", or "irp"
+filtered_df <- d[, grepl("ybt|fyu|irp", colnames(d)), drop = FALSE]
+
+# Add row names as a new column
+filtered_df$seq <- rownames(filtered_df)
+
+
+# View the filtered dataframe
+head(filtered_df)
+
+# Sum values by category
+library(dplyr)
+
+```
+
+### 3.4:  Join to metadata 
+
+```{r}
+
+metadata = read_csv("data/all_773_DASSIM_BSI_metadata.csv")
+BSI_metadata_Ec = read_csv("data/BSI_metadata_Ec.csv")
+BSI_metadata_KpSc = read_csv("data/BSI_metadata_KpSc_2.csv")
+
+library(dplyr)
+library(stringr)
+
+filtered_df <- d[, grepl("ybt|fyu|irp", colnames(d)), drop = FALSE]
+filtered_df$seq <- rownames(filtered_df)
+
+filtered_df <- filtered_df %>%
+  mutate(seq = gsub("-", "_", seq))
+
+rownames(filtered_df) = gsub("-", "_", rownames(filtered_df))
+
+# DASSIM	ERR3865256	28099_1_10	ERR3865256
+
+# Create a named vector for replacement
+replacement_map <- setNames(metadata$ENA_accession, metadata$lane)
+
+# Perform the replacement
+filtered_df <- filtered_df %>%
+  mutate(accession = str_replace_all(seq, replacement_map) # Replace lanes with ENA accessions
+  )
+
+comparison_df = data.frame(accession = metadata$ENA_accession, 
+                           lane = metadata$lane)
+
+# Add the accession column with conditional logic
+filtered_df[,"accession"] <- ifelse(
+  grepl("^E", filtered_df[,"seq"]), # Check if seq starts with "E"
+  filtered_df[,"seq"], # If true, copy seq to accession
+  comparison_df$accession[match(unlist(filtered_df[,"seq"]), comparison_df$lane)] # Otherwise, match and replace
+)
+
+# View the results
+print(filtered_df["28099_1_10",]) # Should be ERR3865256
+
+
+# Reshape and summarize data for wide
+
+metadata$accession = metadata$ENA_accession
+
+metadata_Ec_update = metadata %>% 
+  left_join(BSI_metadata_Ec, by = c('Strain_ID'))
+
+metadata_KpSc_update = metadata_Ec_update %>% 
+  left_join(BSI_metadata_KpSc, by = c('Strain_ID'))
+
+meta_join = filtered_df %>% 
+  left_join(metadata_KpSc_update, by = c('accession'))
+
+# For KpSC
+
+unique(meta_join$Species)
+meta_join_KpSc = meta_join %>% filter(Species == "KpSC")
+
+unique(meta_join$study )
+DASSIM = meta_join_KpSc %>% filter(study == "DASSIM")
+BSI = meta_join_KpSc %>% filter(study == "bacteraemia")
+
+BSI = BSI %>% filter(Source.y == "Blood")
+
+BSI$Source.y
+
+#DASSIM = DASSIM %>% select(starts_with("ybt"))
+#BSI= BSI %>% select(starts_with("ybt"))
+
+DASSIM <- DASSIM %>% select(matches("^ybt|^irp|^fyu"))
+BSI <- BSI %>% select(matches("^ybt|^irp|^fyu"))
+
+summarized_DASSIM  <- DASSIM  %>% summarize(across(where(is.numeric), mean) * 100)
+summarized_BSI <- BSI %>% summarize(across(where(is.numeric), mean) * 100)
+
+summarized_DASSIM$study = "DASSIM"
+summarized_BSI$study = "BSI"
+
+# Reshape and summarize data
+summarized_pc = rbind(summarized_DASSIM, summarized_BSI)
+
+# Bar plot
+library(ggplot2)
+ggplot(summarized_pc, aes(x = study, y = ybtA, fill = study)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Category", y = "Total Value", title = "Bar Plot by Protein Category") +
+  theme_minimal()
+```
+
+
+### 3.5:  Join to DASSIM metadata 
+
+
+```{r}
+
+DASSIM_meta = read_csv("data/DASSIM_metadata.csv")
+
+library(dplyr)
+library(stringr)
+
+
+meta_join_DASSIM = meta_join %>% 
+  left_join(DASSIM_meta, by = c('accession'))
+
+
+
+```
+
+
+
+### 3.6:  Klebsiella pneumoniae species complex (KpSc)
+
+
+```{r}
+# For KpSC
+
+unique(meta_join_DASSIM$Species)
+
+meta_join_KpSc_DASSIM = meta_join_DASSIM %>% filter(Species == "KpSC")
+
+unique(meta_join$study)
+DASSIM = meta_join_KpSc_DASSIM %>% filter(study == "DASSIM")
+DASSIM_sepsis = DASSIM %>% filter(condition == "sepsis")
+DASSIM_inpatient = DASSIM %>% filter(condition == "inpatient")
+DASSIM_community = DASSIM %>% filter(condition == "community")
+BSI = meta_join_KpSc_DASSIM %>% filter(study == "bacteraemia")
+BSI = BSI %>% filter(Source.y == "Blood")
+
+#DASSIM_sepsis = DASSIM_sepsis %>% select(starts_with("ybt"))
+#DASSIM_inpatient = DASSIM_inpatient %>% select(starts_with("ybt"))
+#DASSIM_community = DASSIM_community %>% select(starts_with("ybt"))
+#BSI = BSI %>% select(starts_with("ybt"))
+
+
+# Select columns that start with "ybt", "adr", or "ppy"
+DASSIM_sepsis = DASSIM_sepsis %>% select(matches("^ybt|^irp|^fyu"))
+DASSIM_inpatient = DASSIM_inpatient %>% select(matches("^ybt|^irp|^fyu"))
+DASSIM_community = DASSIM_community %>% select(matches("^ybt|^irp|^fyu"))
+BSI = BSI %>% select(matches("^ybt|^irp|^fyu"))
+
+
+nrow(DASSIM_sepsis) # 138
+nrow(DASSIM_inpatient) # 33
+nrow(DASSIM_community) # 16
+nrow(BSI) # 57
+
+# summarized_DASSIM_sepsis = DASSIM_sepsis %>% summarize(across(where(is.numeric), mean) * 100)
+
+summarized_DASSIM_sepsis = DASSIM_sepsis %>% summarize(across(where(is.numeric), ~ sum(. == 1) / n() * 100))
+summarized_DASSIM_inpatient = DASSIM_inpatient %>% summarize(across(where(is.numeric), ~ sum(. == 1) / n() * 100))
+summarized_DASSIM_community = DASSIM_community %>% summarize(across(where(is.numeric), ~ sum(. == 1) / n() * 100))
+summarized_BSI <- BSI %>% summarize(across(where(is.numeric), ~ sum(. == 1) / n() * 100))
+
+
+summarized_DASSIM_sepsis$study = "DASSIM_sepsis"
+summarized_DASSIM_inpatient$study = "DASSIM_inpatient"
+summarized_DASSIM_community$study = "DASSIM_community"
+summarized_BSI$study = "BSI"
+
+# Reshape and summarize data
+summarized_pc = rbind(summarized_DASSIM_sepsis, summarized_DASSIM_inpatient, summarized_DASSIM_community, summarized_BSI)
+
+# Bar plot
+library(ggplot2)
+ggplot(summarized_pc, aes(x = study, y = ybtA, fill = study)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Category", y = "Total Value", title = "Bar Plot by Protein Category") +
+  theme_minimal()
+
+# Convert to long  ##
+
+summarized_long_pc = summarized_pc %>% pivot_longer(!study, names_to = "gene", values_to = "count")
+
+summarized_pc_for_paper_KpSc = summarized_long_pc %>% group_by(study) %>% summarize(meant_count = mean(count))
+
+summarized_long_pc$order <- factor(summarized_long_pc$study, levels = sort(unique(summarized_long_pc$study)))
+
+level_order <- c('BSI', 'DASSIM_inpatient', 'DASSIM_sepsis', "DASSIM_community") 
+
+KPSC_plot = ggplot(summarized_long_pc, aes(x = factor(study, level = level_order), y = count, fill = study)) +
+  geom_bar(stat = "identity") +
+  ylim(0, 100) +
+  labs(x = "Study", y = "%", title = "K. pneumoniae") +
+  theme_minimal() + facet_wrap(~ gene)
+KPSC_plot
+```
+
+### 3.7:  E. coli 
+
+```{r}
+# For Ecoli
+
+unique(meta_join_DASSIM$Species)
+meta_join_Ecoli_DASSIM = meta_join_DASSIM %>% filter(Species == "E. coli")
+
+unique(meta_join$study)
+DASSIM = meta_join_Ecoli_DASSIM %>% filter(study == "DASSIM")
+DASSIM_sepsis = DASSIM %>% filter(condition == "sepsis")
+DASSIM_inpatient = DASSIM %>% filter(condition == "inpatient")
+DASSIM_community = DASSIM %>% filter(condition == "community")
+BSI = meta_join_Ecoli_DASSIM %>% filter(study == "bacteraemia")
+BSI = BSI %>% filter(Source.x == "Blood")
+
+#DASSIM_sepsis = DASSIM_sepsis %>% select(starts_with("ybt"))
+#DASSIM_inpatient = DASSIM_inpatient %>% select(starts_with("ybt"))
+#DASSIM_community = DASSIM_community %>% select(starts_with("ybt"))
+#BSI = BSI %>% select(starts_with("ybt"))
+
+
+DASSIM_sepsis = DASSIM_sepsis %>% select(matches("^ybt|^irp|^fyu"))
+DASSIM_inpatient = DASSIM_inpatient %>% select(matches("^ybt|^irp|^fyu"))
+DASSIM_community = DASSIM_community %>% select(matches("^ybt|^irp|^fyu"))
+BSI = BSI %>% select(matches("^ybt|^irp|^fyu"))
+
+nrow(DASSIM_sepsis) # 334
+nrow(DASSIM_inpatient) # 84
+nrow(DASSIM_community) # 31
+nrow(BSI) # 23
+
+# summarized_DASSIM_sepsis = DASSIM_sepsis %>% summarize(across(where(is.numeric), mean) * 100)
+
+summarized_DASSIM_sepsis = DASSIM_sepsis %>% summarize(across(where(is.numeric), ~ sum(. == 1) / n() * 100))
+summarized_DASSIM_inpatient = DASSIM_inpatient %>% summarize(across(where(is.numeric), ~ sum(. == 1) / n() * 100))
+summarized_DASSIM_community = DASSIM_community %>% summarize(across(where(is.numeric), ~ sum(. == 1) / n() * 100))
+summarized_BSI <- BSI %>% summarize(across(where(is.numeric), ~ sum(. == 1) / n() * 100))
+
+summarized_DASSIM_sepsis$study = "DASSIM_sepsis"
+summarized_DASSIM_inpatient$study = "DASSIM_inpatient"
+summarized_DASSIM_community$study = "DASSIM_community"
+summarized_BSI$study = "BSI"
+
+# Reshape and summarize data
+summarized_pc = rbind(summarized_DASSIM_sepsis, summarized_DASSIM_inpatient, summarized_DASSIM_community, summarized_BSI)
+
+# Bar plot
+library(ggplot2)
+ggplot(summarized_pc, aes(x = study, y = ybtA, fill = study)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Category", y = "Total Value", title = "Bar Plot by Protein Category") +
+  theme_minimal()
+
+# Convert to long  ##
+
+summarized_long_pc = summarized_pc %>% pivot_longer(!study, names_to = "gene", values_to = "count")
+
+summarized_pc_for_paper_Ec = summarized_long_pc %>% group_by(study) %>% summarize(meant_count = mean(count))
+
+summarized_long_pc$order <- factor(summarized_long_pc$study, levels = sort(unique(summarized_long_pc$study)))
+
+level_order <- c("DASSIM_community", 'DASSIM_inpatient', 'DASSIM_sepsis', 'BSI') 
+
+Ecoli_plot = ggplot(summarized_long_pc, aes(x = factor(study, level = level_order), y = count, fill = study)) +
+  geom_bar(stat = "identity") +
+  ylim(0, 100) +
+  labs(x = "Study", y = "%", title = "E. coli") +
+  theme_minimal() + facet_wrap(~ gene)
+Ecoli_plot
+```
+
+### 3.8:  E. coli and KpSc plotted together 
+
+```{r}
+library(ggpubr)
+ggarrange(KPSC_plot, Ecoli_plot, ncol = 2, nrow = 1)
+```
+

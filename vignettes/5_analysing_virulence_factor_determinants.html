@@ -1,0 +1,1342 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.5.55">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Richard Goodman">
+<meta name="dcterms.date" content="2025-04-24">
+
+<title>5: Analysing virulence factor determinants</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="5_analysing_virulence_factor_determinants_files/libs/clipboard/clipboard.min.js"></script>
+<script src="5_analysing_virulence_factor_determinants_files/libs/quarto-html/quarto.js"></script>
+<script src="5_analysing_virulence_factor_determinants_files/libs/quarto-html/popper.min.js"></script>
+<script src="5_analysing_virulence_factor_determinants_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="5_analysing_virulence_factor_determinants_files/libs/quarto-html/anchor.min.js"></script>
+<link href="5_analysing_virulence_factor_determinants_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="5_analysing_virulence_factor_determinants_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="5_analysing_virulence_factor_determinants_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="5_analysing_virulence_factor_determinants_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="5_analysing_virulence_factor_determinants_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">5: Analysing virulence factor determinants</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Richard Goodman </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">April 24, 2025</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="introduction" class="level2">
+<h2 class="anchored" data-anchor-id="introduction">Introduction</h2>
+<p>This tutorial screens genomes against the virulence factor database (VFDB) to search for virulence genes and visualises them as a heatmap.</p>
+<p>It also shows how the BSI and DASSIM databases were compared.</p>
+</section>
+<section id="part-1---genome-download-and-virulence-factor-screening-with-abricate" class="level2">
+<h2 class="anchored" data-anchor-id="part-1---genome-download-and-virulence-factor-screening-with-abricate">Part 1 - Genome download and virulence factor screening with abricate</h2>
+<section id="download-reads-and-run-assemblies" class="level3">
+<h3 class="anchored" data-anchor-id="download-reads-and-run-assemblies">1.1: Download reads and run assemblies</h3>
+<p>See the <a href="https://rngoodman.github.io/blood-faecal-genomic-comparison/genome_assemblies.html">code on how to download reads and run assemblies</a></p>
+</section>
+<section id="run-abricate-on-genomes" class="level3">
+<h3 class="anchored" data-anchor-id="run-abricate-on-genomes">1.2: Run abricate on genomes</h3>
+<p>Download abricate if you haven’t already, then you can run it simply with the following command.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>abricate <span class="sc">--</span>db resfinder <span class="sc">--</span>mincov <span class="dv">60</span> <span class="sc">--</span>minid <span class="dv">90</span> <span class="sc">--</span>csv <span class="sc">*</span>.fasta <span class="sc">&gt;</span> all_paired_blood_faecal_hybracter_vfdb_fasta_L60_T90_plus_BSI_indicators.csv</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="part-2---plotting-virulence-factor-heatmaps-in-r" class="level2">
+<h2 class="anchored" data-anchor-id="part-2---plotting-virulence-factor-heatmaps-in-r">Part 2 - Plotting virulence factor heatmaps in R</h2>
+<section id="import-the-data" class="level3">
+<h3 class="anchored" data-anchor-id="import-the-data">2.1: Import the data</h3>
+<p>Import the data from abricate</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pheatmap)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RColorBrewer)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(reshape2)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pheatmap)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RColorBrewer)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Reading in data</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>abricate_output <span class="ot">=</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="st">"data/all_paired_blood_faecal_hybracter_vfdb_fasta_L60_T90_plus_BSI_indicators.csv"</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>ab_tab <span class="ot">=</span> abricate_output</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="wrangle-abricate-dataset" class="level3">
+<h3 class="anchored" data-anchor-id="wrangle-abricate-dataset">2.2: Wrangle abricate dataset</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>rm_duplicates <span class="ot">=</span> <span class="cf">function</span>(ab_tab)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># First Remove duplicates</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># These cause issues with creating a lit rather than a dataframe</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># When compared against the database there can sometimes be duplciates </span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># arrange and group by ab_tab </span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  ab_tab_unique <span class="ot">&lt;-</span> ab_tab <span class="sc">%&gt;%</span> </span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(GENE, <span class="sc">-</span><span class="st">`</span><span class="at">%COVERAGE</span><span class="st">`</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(GENE)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Check the colnames</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">colnames</span>(ab_tab_unique)</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Check the duplicates </span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">duplicated</span>(ab_tab_unique[<span class="fu">c</span>(<span class="st">"#FILE"</span>,<span class="st">"GENE"</span>)])</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="st">"Duplicates found:"</span>)</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">c</span>(<span class="fu">which</span>(<span class="fu">duplicated</span>(ab_tab_unique[<span class="fu">c</span>(<span class="st">"#FILE"</span>,<span class="st">"GENE"</span>)]) <span class="sc">==</span> <span class="cn">TRUE</span>))) <span class="co"># see which contain duplicates</span></span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Remove columns that contain duplicates in FILE, GENE and COVERAGE </span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>  ab_tab_unique <span class="ot">&lt;-</span> ab_tab[<span class="sc">!</span><span class="fu">duplicated</span>(ab_tab_unique[<span class="fu">c</span>(<span class="st">"#FILE"</span>,<span class="st">"GENE"</span>)]),] <span class="co">#using colnames</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>  <span class="co">#ab_tab_unique &lt;- ab_tab_unique[!duplicated(ab_tab_unique[c(1,2)]),] #using col numbers</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Check whether duplicates have been delted </span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="st">"Duplicates remaining:"</span>)</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="fu">which</span>(<span class="fu">duplicated</span>(ab_tab_unique[<span class="fu">c</span>(<span class="st">"#FILE"</span>,<span class="st">"GENE"</span>)]) <span class="sc">==</span> <span class="cn">TRUE</span>)) <span class="co"># see which contain duplicates</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>  {</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(ab_tab_unique)</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Run function </span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>ab_tab_unique <span class="ot">=</span> <span class="fu">rm_duplicates</span>(ab_tab)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Duplicates found:"
+ [1] 404 405 406 407 408 409 410 411 412 413 414 415 416 417 418 419 420 421
+[1] "Duplicates remaining:"
+ [1] 724 728 729 733 734 736 740 741 745 748 749 751 752 754 757 758 760 764</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>mk_count_table <span class="ot">=</span> <span class="cf">function</span>(ab_tab)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Funtion to make the Abricate table wide </span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Create a new value from original ab_tab to wide count table </span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  wide <span class="ot">=</span> ab_tab <span class="sc">%&gt;%</span> </span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># select strain, gene and resistance and rename</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="st">"#FILE"</span>, GENE, RESISTANCE) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="co"># rename </span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">rename</span>(<span class="at">gene =</span> <span class="st">"GENE"</span>,</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>           <span class="at">file =</span> <span class="st">"#FILE"</span>,</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>           <span class="at">resistance =</span> <span class="st">"RESISTANCE"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># count genes vs strains</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">count</span>(file, gene) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Convert to wide table with genes as column headers and n as values </span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_wider</span>(<span class="at">names_from =</span> gene,</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>                <span class="at">values_from =</span> n)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Shorten strain names (remove the unnecessary string)</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  wide<span class="sc">$</span>file <span class="ot">=</span> <span class="fu">gsub</span>(<span class="st">".fa"</span>, <span class="st">""</span>, wide<span class="sc">$</span>file)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  wide<span class="sc">$</span>file <span class="ot">=</span> <span class="fu">gsub</span>(<span class="st">"_assembled.fasta"</span>, <span class="st">""</span>, wide<span class="sc">$</span>file)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  {</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(wide)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Run function </span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>wide <span class="ot">=</span> <span class="fu">mk_count_table</span>(ab_tab_unique)</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>wide<span class="sc">$</span>file</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "FSBL0558_hybractersta"  "FSBL1386_hybractersta"  "FSBL1448_flyesta"      
+ [4] "FSBL1654_hybractersta"  "FSBL1925_hybractersta"  "FSBL2071_hybractersta" 
+ [7] "FSBL2111_hybractersta"  "FSBL2112_hybractersta"  "FSBL2130_hybractersta" 
+[10] "FSBL2155_hybractersta"  "FSBL2240_hybractersta"  "FSBL2258_hybractersta" 
+[13] "FSBL2265_hybractersta"  "FSFC0558_hybractersta"  "FSFC1386_hybractersta" 
+[16] "FSFC1448_flyesta"       "FSFC1654_unicyclersta"  "FSFC1925_hybractersta" 
+[19] "FSFC2071_hybractersta"  "FSFC2111K_hybractersta" "FSFC2112_hybractersta" 
+[22] "FSFC2130_hybractersta"  "FSFC2155_hybractersta"  "FSFC2240_unicyclersta" 
+[25] "FSFC2258_hybractersta"  "FSFC2265_hybractersta" </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>wide<span class="sc">$</span>file <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">"_hybractersta"</span>, <span class="st">""</span>, wide<span class="sc">$</span>file)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>wide<span class="sc">$</span>file <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">"_flyesta"</span>, <span class="st">""</span>, wide<span class="sc">$</span>file)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>wide<span class="sc">$</span>file <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">"_unicyclersta"</span>, <span class="st">""</span>, wide<span class="sc">$</span>file)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co"># check</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>wide<span class="sc">$</span>file</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "FSBL0558"  "FSBL1386"  "FSBL1448"  "FSBL1654"  "FSBL1925"  "FSBL2071" 
+ [7] "FSBL2111"  "FSBL2112"  "FSBL2130"  "FSBL2155"  "FSBL2240"  "FSBL2258" 
+[13] "FSBL2265"  "FSFC0558"  "FSFC1386"  "FSFC1448"  "FSFC1654"  "FSFC1925" 
+[19] "FSFC2071"  "FSFC2111K" "FSFC2112"  "FSFC2130"  "FSFC2155"  "FSFC2240" 
+[25] "FSFC2258"  "FSFC2265" </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Converts to dataframe</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>count_to_dataframe <span class="ot">=</span> <span class="cf">function</span>(wide)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  wide <span class="ot">=</span> wide</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># make the genenames a variable </span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  rows <span class="ot">=</span> wide<span class="sc">$</span>file</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Remove the file column</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  wide3 <span class="ot">=</span> wide <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>file)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># name the rows as strains</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames</span>(wide3) <span class="ot">=</span> rows</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  <span class="co"># convert to dataframe</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">=</span> <span class="fu">as.data.frame</span>(wide3)</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># convert na to 0</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  d[<span class="fu">is.na</span>(d)] <span class="ot">=</span> <span class="dv">0</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>  <span class="co">#name rows</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames</span>(d) <span class="ot">=</span> rows</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>  <span class="co"># convert to matrix</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>  df <span class="ot">=</span> d</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>  {</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(df)</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>df <span class="ot">=</span> <span class="fu">count_to_dataframe</span>(wide)</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Converts to matrix</span></span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>count_to_mat <span class="ot">=</span> <span class="cf">function</span>(wide)</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>{</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>  wide <span class="ot">=</span> wide</span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>  <span class="co"># make the genenames a variable </span></span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>  rows <span class="ot">=</span> wide<span class="sc">$</span>file</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Remove the file column</span></span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>  wide3 <span class="ot">=</span> wide <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span>file)</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>  <span class="co"># name the rows as strains</span></span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames</span>(wide3) <span class="ot">=</span> rows</span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>  <span class="co"># convert to dataframe</span></span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">=</span> <span class="fu">as.data.frame</span>(wide3)</span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>  <span class="co"># convert na to 0</span></span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>  d[<span class="fu">is.na</span>(d)] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>  <span class="co"># name rows</span></span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames</span>(d) <span class="ot">=</span> rows</span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-58"><a href="#cb9-58" aria-hidden="true" tabindex="-1"></a>  <span class="co"># convert to matrix</span></span>
+<span id="cb9-59"><a href="#cb9-59" aria-hidden="true" tabindex="-1"></a>  mat <span class="ot">=</span> <span class="fu">as.matrix</span>(d)</span>
+<span id="cb9-60"><a href="#cb9-60" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-61"><a href="#cb9-61" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-62"><a href="#cb9-62" aria-hidden="true" tabindex="-1"></a>  {</span>
+<span id="cb9-63"><a href="#cb9-63" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(mat)</span>
+<span id="cb9-64"><a href="#cb9-64" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-65"><a href="#cb9-65" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-66"><a href="#cb9-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-67"><a href="#cb9-67" aria-hidden="true" tabindex="-1"></a><span class="co"># Run Function </span></span>
+<span id="cb9-68"><a href="#cb9-68" aria-hidden="true" tabindex="-1"></a>mat <span class="ot">=</span> <span class="fu">count_to_mat</span>(wide)</span>
+<span id="cb9-69"><a href="#cb9-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-70"><a href="#cb9-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-71"><a href="#cb9-71" aria-hidden="true" tabindex="-1"></a><span class="co"># Check output</span></span>
+<span id="cb9-72"><a href="#cb9-72" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(mat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 26</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">class</span>(mat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "matrix" "array" </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(mat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "hha"       "yagZ/ecpA" "fyuA"      "irp1"      "irp2"      "ybtA"     
+ [7] "ybtE"      "ybtP"      "ybtQ"      "ybtS"      "ybtT"      "ybtU"     
+[13] "ybtX"      "aslA"      "chuA"      "chuS"      "chuT"      "chuU"     
+[19] "chuV"      "chuW"      "chuX"      "chuY"      "entA"      "entB"     
+[25] "entC"      "entD"      "entE"      "entF"      "entS"      "fdeC"     
+[31] "fepA"      "fepB"      "fepC"      "fepD"      "fepG"      "fes"      
+[37] "fimA"      "fimB"      "fimC"      "fimD"      "fimE"      "fimF"     
+[43] "fimG"      "fimH"      "fimI"      "gspC"      "gspD"      "gspE"     
+[49] "gspF"      "gspG"      "gspH"      "gspI"      "gspJ"      "gspK"     
+[55] "gspL"      "gspM"      "iucA"      "iucB"      "iucC"      "iucD"     
+[61] "kpsD"      "kpsM"      "kpsT"      "ompA"      "papB"      "papI"     
+[67] "papX"      "sat"       "senB"      "vat"       "yagV/ecpE" "yagW/ecpD"
+[73] "yagX/ecpC" "yagY/ecpB" "ykgK/ecpR" "afaB-I"    "afaC-I"    "daaF"     
+[79] "draA"      "draD"      "draE2"     "draP"     </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(mat)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "FSBL0558"  "FSBL1386"  "FSBL1448"  "FSBL1654"  "FSBL1925"  "FSBL2071" 
+ [7] "FSBL2111"  "FSBL2112"  "FSBL2130"  "FSBL2155"  "FSBL2240"  "FSBL2258" 
+[13] "FSBL2265"  "FSFC0558"  "FSFC1386"  "FSFC1448"  "FSFC1654"  "FSFC1925" 
+[19] "FSFC2071"  "FSFC2111K" "FSFC2112"  "FSFC2130"  "FSFC2155"  "FSFC2240" 
+[25] "FSFC2258"  "FSFC2265" </code></pre>
+</div>
+</div>
+</section>
+<section id="plot-a-basic-heatmap" class="level3">
+<h3 class="anchored" data-anchor-id="plot-a-basic-heatmap">2.3: Plot a basic heatmap</h3>
+<p>Next we will select the mutations based</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># convert to binary </span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>df <span class="ot">=</span> <span class="fu">count_to_dataframe</span>(wide)</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(df <span class="sc">&gt;</span> <span class="dv">0</span>, <span class="dv">1</span>, <span class="dv">0</span>)</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate  basic heatmap</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a><span class="fu">pheatmap</span>(df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="5_analysing_virulence_factor_determinants_files/figure-html/unnamed-chunk-4-1.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="plot-an-annotated-heatmap" class="level3">
+<h3 class="anchored" data-anchor-id="plot-an-annotated-heatmap">2.3: Plot an annotated heatmap</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate the heatmap with annotations</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>isolates <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"data/Isolate_species.csv"</span>)</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>isolates_df <span class="ot">=</span> <span class="fu">as.data.frame</span>(isolates)</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>isolates_df <span class="ot">=</span> isolates_df[<span class="sc">-</span><span class="dv">1</span>,]</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>species_colors <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"K. pneumoniae"</span> <span class="ot">=</span> <span class="st">"#DDAD3B"</span>, </span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"E. coli"</span> <span class="ot">=</span> <span class="st">"#9F7831"</span>,</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"K. quasipneumoniae similipneumoniae"</span> <span class="ot">=</span> <span class="st">"#666666"</span>)</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Annotation for isolates (y-axis)</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>annotation_row <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Species =</span> isolates_df<span class="sc">$</span>Species)</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(annotation_row) <span class="ot">&lt;-</span> isolates_df<span class="sc">$</span>Isolate</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>vfdb_class <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"data/VFDB_classes.csv"</span>)</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>vfdb_class_df <span class="ot">=</span> <span class="fu">as.data.frame</span>(vfdb_class)</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>class_colors <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"Protectins"</span> <span class="ot">=</span> <span class="st">"#4B9B7A"</span>, </span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Toxins"</span> <span class="ot">=</span> <span class="st">"#CA6728"</span>, </span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Iron-uptake"</span> <span class="ot">=</span> <span class="st">"#D43F88"</span>, </span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"Adhesins"</span> <span class="ot">=</span> <span class="st">"#7470AF"</span>)</span>
+<span id="cb18-25"><a href="#cb18-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-26"><a href="#cb18-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-27"><a href="#cb18-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Annotation for isolates (x-axis)</span></span>
+<span id="cb18-28"><a href="#cb18-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-29"><a href="#cb18-29" aria-hidden="true" tabindex="-1"></a>annotation_col <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">class =</span> vfdb_class_df<span class="sc">$</span>class)</span>
+<span id="cb18-30"><a href="#cb18-30" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(annotation_col) <span class="ot">&lt;-</span> vfdb_class_df<span class="sc">$</span>GENE</span>
+<span id="cb18-31"><a href="#cb18-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-32"><a href="#cb18-32" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a list of annotation colors</span></span>
+<span id="cb18-33"><a href="#cb18-33" aria-hidden="true" tabindex="-1"></a>annotation_colors <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">class =</span> class_colors, <span class="at">Species =</span> species_colors)</span>
+<span id="cb18-34"><a href="#cb18-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-35"><a href="#cb18-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-36"><a href="#cb18-36" aria-hidden="true" tabindex="-1"></a>custom_colors <span class="ot">&lt;-</span> <span class="fu">colorRampPalette</span>(<span class="fu">c</span>(<span class="st">"#FFFFFF"</span>,<span class="st">"#FBF5BB"</span>, <span class="st">"#FADF9F"</span>, <span class="st">"#F8B877"</span>, <span class="st">"#D37A5A"</span>, <span class="st">"#A84451"</span>))(<span class="dv">6</span>)</span>
+<span id="cb18-37"><a href="#cb18-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-38"><a href="#cb18-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-39"><a href="#cb18-39" aria-hidden="true" tabindex="-1"></a><span class="fu">pheatmap</span>(df, </span>
+<span id="cb18-40"><a href="#cb18-40" aria-hidden="true" tabindex="-1"></a>         <span class="at">annotation_col =</span> annotation_col, </span>
+<span id="cb18-41"><a href="#cb18-41" aria-hidden="true" tabindex="-1"></a>         <span class="at">annotation_row =</span> annotation_row, </span>
+<span id="cb18-42"><a href="#cb18-42" aria-hidden="true" tabindex="-1"></a>         <span class="at">annotation_colors =</span> annotation_colors, </span>
+<span id="cb18-43"><a href="#cb18-43" aria-hidden="true" tabindex="-1"></a>         <span class="at">color =</span> custom_colors,</span>
+<span id="cb18-44"><a href="#cb18-44" aria-hidden="true" tabindex="-1"></a>         <span class="at">show_rownames =</span> <span class="cn">TRUE</span>, </span>
+<span id="cb18-45"><a href="#cb18-45" aria-hidden="true" tabindex="-1"></a>         <span class="at">show_colnames =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb18-46"><a href="#cb18-46" aria-hidden="true" tabindex="-1"></a>         <span class="at">border_color =</span> <span class="st">"black"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="5_analysing_virulence_factor_determinants_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="1920"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="part-3---comparison-of-virulence-factors-across-datasets-in-r" class="level2">
+<h2 class="anchored" data-anchor-id="part-3---comparison-of-virulence-factors-across-datasets-in-r">Part 3 - Comparison of virulence factors across datasets in R</h2>
+<section id="import-the-data-1" class="level3">
+<h3 class="anchored" data-anchor-id="import-the-data-1">3.1: Import the data</h3>
+<p>Import the data from abricate for 773 isolates from the BSI and DASSIM datasets.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load necessary libraries</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readxl)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pheatmap)</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tibble)</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RColorBrewer)</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 772 Malawi Kleb Strains</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>abricate_output <span class="ot">=</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="st">"data/all_abricate_773_Ec_Kp_CHL_VFDB_fasta_L60_T90.csv"</span>)</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>ab_tab <span class="ot">=</span> abricate_output </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co">#DASSIM &lt;- DASSIM %&gt;% select(matches("^ybt|^irp|^fyu"))</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>iron_VF <span class="ot">&lt;-</span> ab_tab <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="fu">grepl</span>(<span class="st">"ybt|fyu|irp"</span>, GENE))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="wrangle-dataset" class="level3">
+<h3 class="anchored" data-anchor-id="wrangle-dataset">3.2: Wrangle dataset</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Remove duplicates </span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>ab_tab_unique <span class="ot">=</span> <span class="fu">rm_duplicates</span>(ab_tab)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Duplicates found:"
+  [1]    67   630   750   754   757   761   770   788   793  3914  4276  4279
+ [13]  4288  4291  4304  4319  4321  4482  4487  4497  4501  4515  4537  5093
+ [25]  5130  5174  5221  5321  5880  5914  5915  5922  5975  6017  8089  8780
+ [37]  9523  9759  9992 10037 10120 10123 10176 10195 10196 10197 10584 10598
+ [49] 10600 10602 10603 10703 10711 10948 10949 12707 12949 13359 13503 13537
+ [61] 13599 13667 14220 15243 15245 15320 15325 15389 15411 15456 15554 15606
+ [73] 16078 17304 17306 17418 17425 17512 17593 17892 17919 18066 18068 18258
+ [85] 18992 19318 20957 20958 21293 21648 22228 22317 22449 22560 22667 22673
+ [97] 22674 23783 23785 23796 23798 23803 23822 23824 23855 23858 23882 23910
+[109] 23912 23922 23935 23944 23995 24008 24012 24017 24020 24073 24075 24086
+[121] 24088 24093 24112 24114 24145 24148 24172 24200 24202 24212 24225 24235
+[133] 24300 25000 25095 25100 25103 25110 25376 26040 26104 26150 26213 26273
+[145] 26325 26356 26359 26368 26371 26404 26407 26516 26518 26555 26559 26644
+[157] 26647 26655 26666 26671 26673 26675 26677 26682 26686 26690 26692 26694
+[169] 26701 26704 26706 26710 26720 26722 26726 26746 26749 26758 26762 26782
+[181] 26866 26869 26899 26907 26909 26911 26913 26929 26933 26937 26948 26952
+[193] 26974 27016 27267 27271 27272 28096 28133 28198 28364 28366 28876 28941
+[205] 29050 29111 29641 29672 29673 29732 29797 30328 30365 30367 30375 30431
+[217] 30538 31116 31151 31159 31213 31257 31283 34416 34417 34942 34977 34985
+[229] 35040 35108 35171
+[1] "Duplicates remaining:"
+  [1]  1075  1083  1411  1414  3115  3116  3198  3199  3284  3967  3977  3978
+ [13]  4220  4221  4406  4407  4885  4886  5738  6502  6504  7153  7154  7235
+ [25]  7236  7692  7776  7779  7853  7859  7938  7941  8019  8022  8385  8422
+ [37]  9591  9592  9593  9594  9597  9599  9609  9610  9998 10000 10002 10012
+ [49] 10013 10014 10019 10508 10511 10624 10891 11065 11456 11457 11697 11698
+ [61] 11945 11951 12493 12650 12948 12957 12958 14295 14328 14417 14418 14537
+ [73] 14543 14999 15000 15143 15146 15152 15239 15240 15252 15253 15254 15291
+ [85] 15298 15299 15300 15306 15307 15401 15430 15646 15647 15665 15685 15704
+ [97] 15728 15792 15799 16387 16388 16389 16392 16393 16394 16398 17238 17239
+[109] 18350 18351 18444 18445 18575 18606 18609 18930 19407 19413 19414 19627
+[121] 19628 19934 19979 20757 20758 20759 20952 20953 21293 21720 21721 22104
+[133] 22105 22672 22724 22725 23400 23427 23428 23431 23615 25109 25110 25118
+[145] 25132 25566 25946 25964 25987 26450 26451 26494 26793 27176 27192 28250
+[157] 28251 28274 28276 28277 28278 28279 28280 28801 28806 28818 28819 28820
+[169] 28824 28883 28884 28891 28896 28901 28902 28903 28904 28905 28971 28977
+[181] 28978 28979 28992 29884 29907 29908 29909 29917 29918 29919 29920 29921
+[193] 29922 30323 30584 30594 30634 30635 30952 30971 30979 31031 32253 32262
+[205] 32347 32358 32359 32485 32499 32500 32594 32652 32653 32787 32979 33063
+[217] 33513 33514 33517 33533 33542 34034 34037 34038 34039 34040 34041 34089
+[229] 34096</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Make count table</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>wide <span class="ot">=</span> <span class="fu">mk_count_table</span>(ab_tab_unique)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Rename necessary </span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>wide<span class="sc">$</span>file <span class="ot">=</span> <span class="fu">gsub</span>(<span class="st">"all_spades_assemblies/"</span>, <span class="st">""</span>, wide<span class="sc">$</span>file)</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>wide<span class="sc">$</span>file <span class="ot">=</span> <span class="fu">gsub</span>(<span class="st">".fa"</span>, <span class="st">""</span>, wide<span class="sc">$</span>file)</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>wide<span class="sc">$</span>file <span class="ot">=</span> <span class="fu">gsub</span>(<span class="st">".fasta"</span>, <span class="st">""</span>, wide<span class="sc">$</span>file)</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>wide<span class="sc">$</span>file <span class="ot">=</span> <span class="fu">gsub</span>(<span class="st">"_assembledsta"</span>, <span class="st">""</span>, wide<span class="sc">$</span>file)</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>wide<span class="sc">$</span>file <span class="ot">=</span> <span class="fu">gsub</span>(<span class="st">"_1_SPAdes_assemblysta"</span>, <span class="st">""</span>, wide<span class="sc">$</span>file)</span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>wide<span class="sc">$</span>file <span class="ot">=</span> <span class="fu">gsub</span>(<span class="st">"_assembled.fasta"</span>, <span class="st">""</span>, wide<span class="sc">$</span>file)</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>wide<span class="sc">$</span>file <span class="ot">=</span> <span class="fu">gsub</span>(<span class="st">"_contigssta"</span>, <span class="st">""</span>, wide<span class="sc">$</span>file)</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>wide<span class="sc">$</span>file <span class="ot">=</span> <span class="fu">gsub</span>(<span class="st">"sta"</span>, <span class="st">""</span>, wide<span class="sc">$</span>file)</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-14"><a href="#cb23-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert count table to dataframe </span></span>
+<span id="cb23-15"><a href="#cb23-15" aria-hidden="true" tabindex="-1"></a>d <span class="ot">=</span> <span class="fu">count_to_dataframe</span>(wide)</span>
+<span id="cb23-16"><a href="#cb23-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-17"><a href="#cb23-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert count table to matrix</span></span>
+<span id="cb23-18"><a href="#cb23-18" aria-hidden="true" tabindex="-1"></a>mat <span class="ot">=</span> <span class="fu">count_to_mat</span>(wide)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="filter-for-ybt-fyu-irp" class="level3">
+<h3 class="anchored" data-anchor-id="filter-for-ybt-fyu-irp">3.3: Filter for ybt + fyu + irp</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter the dataframe for the column "ybt"</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="co">#filtered_df &lt;- d[, grepl("ybt", colnames(d)), drop = FALSE]</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="co">#filtered_df$seq = rownames(filtered_df)</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter the dataframe for columns containing "ybt", "fyu", or "irp"</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>filtered_df <span class="ot">&lt;-</span> d[, <span class="fu">grepl</span>(<span class="st">"ybt|fyu|irp"</span>, <span class="fu">colnames</span>(d)), drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Add row names as a new column</span></span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>filtered_df<span class="sc">$</span>seq <span class="ot">&lt;-</span> <span class="fu">rownames</span>(filtered_df)</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a><span class="co"># View the filtered dataframe</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(filtered_df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>            fyuA irp1 irp2 ybtA ybtE ybtP ybtQ ybtS ybtT ybtU ybtX         seq
+26141-1-134    1    1    1    1    1    1    1    1    1    1    1 26141-1-134
+26141-1-135    1    1    1    1    1    1    1    1    1    1    1 26141-1-135
+26141-1-136    1    1    1    1    1    1    1    1    1    1    1 26141-1-136
+26141-1-137    1    1    1    1    1    1    1    1    1    1    1 26141-1-137
+26141-1-138    0    0    0    0    0    0    0    0    0    0    0 26141-1-138
+26141-1-139    1    1    1    1    1    1    1    1    1    1    1 26141-1-139</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sum values by category</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="join-to-metadata" class="level3">
+<h3 class="anchored" data-anchor-id="join-to-metadata">3.4: Join to metadata</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>metadata <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"data/all_773_DASSIM_BSI_metadata.csv"</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>BSI_metadata_Ec <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"data/BSI_metadata_Ec.csv"</span>)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>BSI_metadata_KpSc <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"data/BSI_metadata_KpSc_2.csv"</span>)</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>filtered_df <span class="ot">&lt;-</span> d[, <span class="fu">grepl</span>(<span class="st">"ybt|fyu|irp"</span>, <span class="fu">colnames</span>(d)), drop <span class="ot">=</span> <span class="cn">FALSE</span>]</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>filtered_df<span class="sc">$</span>seq <span class="ot">&lt;-</span> <span class="fu">rownames</span>(filtered_df)</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>filtered_df <span class="ot">&lt;-</span> filtered_df <span class="sc">%&gt;%</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">seq =</span> <span class="fu">gsub</span>(<span class="st">"-"</span>, <span class="st">"_"</span>, seq))</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(filtered_df) <span class="ot">=</span> <span class="fu">gsub</span>(<span class="st">"-"</span>, <span class="st">"_"</span>, <span class="fu">rownames</span>(filtered_df))</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a><span class="co"># DASSIM    ERR3865256  28099_1_10  ERR3865256</span></span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a named vector for replacement</span></span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>replacement_map <span class="ot">&lt;-</span> <span class="fu">setNames</span>(metadata<span class="sc">$</span>ENA_accession, metadata<span class="sc">$</span>lane)</span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Perform the replacement</span></span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>filtered_df <span class="ot">&lt;-</span> filtered_df <span class="sc">%&gt;%</span></span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">accession =</span> <span class="fu">str_replace_all</span>(seq, replacement_map) <span class="co"># Replace lanes with ENA accessions</span></span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a>comparison_df <span class="ot">=</span> <span class="fu">data.frame</span>(<span class="at">accession =</span> metadata<span class="sc">$</span>ENA_accession, </span>
+<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a>                           <span class="at">lane =</span> metadata<span class="sc">$</span>lane)</span>
+<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-29"><a href="#cb27-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Add the accession column with conditional logic</span></span>
+<span id="cb27-30"><a href="#cb27-30" aria-hidden="true" tabindex="-1"></a>filtered_df[,<span class="st">"accession"</span>] <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(</span>
+<span id="cb27-31"><a href="#cb27-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">grepl</span>(<span class="st">"^E"</span>, filtered_df[,<span class="st">"seq"</span>]), <span class="co"># Check if seq starts with "E"</span></span>
+<span id="cb27-32"><a href="#cb27-32" aria-hidden="true" tabindex="-1"></a>  filtered_df[,<span class="st">"seq"</span>], <span class="co"># If true, copy seq to accession</span></span>
+<span id="cb27-33"><a href="#cb27-33" aria-hidden="true" tabindex="-1"></a>  comparison_df<span class="sc">$</span>accession[<span class="fu">match</span>(<span class="fu">unlist</span>(filtered_df[,<span class="st">"seq"</span>]), comparison_df<span class="sc">$</span>lane)] <span class="co"># Otherwise, match and replace</span></span>
+<span id="cb27-34"><a href="#cb27-34" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb27-35"><a href="#cb27-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-36"><a href="#cb27-36" aria-hidden="true" tabindex="-1"></a><span class="co"># View the results</span></span>
+<span id="cb27-37"><a href="#cb27-37" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(filtered_df[<span class="st">"28099_1_10"</span>,]) <span class="co"># Should be ERR3865256</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>           fyuA irp1 irp2 ybtA ybtE ybtP ybtQ ybtS ybtT ybtU ybtX        seq
+28099_1_10    0    0    0    0    0    0    0    0    0    0    0 28099_1_10
+            accession
+28099_1_10 ERR3865256</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Reshape and summarize data for wide</span></span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>metadata<span class="sc">$</span>accession <span class="ot">=</span> metadata<span class="sc">$</span>ENA_accession</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>metadata_Ec_update <span class="ot">=</span> metadata <span class="sc">%&gt;%</span> </span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(BSI_metadata_Ec, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">'Strain_ID'</span>))</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>metadata_KpSc_update <span class="ot">=</span> metadata_Ec_update <span class="sc">%&gt;%</span> </span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(BSI_metadata_KpSc, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">'Strain_ID'</span>))</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>meta_join <span class="ot">=</span> filtered_df <span class="sc">%&gt;%</span> </span>
+<span id="cb29-12"><a href="#cb29-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(metadata_KpSc_update, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">'accession'</span>))</span>
+<span id="cb29-13"><a href="#cb29-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-14"><a href="#cb29-14" aria-hidden="true" tabindex="-1"></a><span class="co"># For KpSC</span></span>
+<span id="cb29-15"><a href="#cb29-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb29-16"><a href="#cb29-16" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(meta_join<span class="sc">$</span>Species)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "E. coli" NA        "KpSC"   </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>meta_join_KpSc <span class="ot">=</span> meta_join <span class="sc">%&gt;%</span> <span class="fu">filter</span>(Species <span class="sc">==</span> <span class="st">"KpSC"</span>)</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(meta_join<span class="sc">$</span>study )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "DASSIM"      NA            "bacteraemia"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>DASSIM <span class="ot">=</span> meta_join_KpSc <span class="sc">%&gt;%</span> <span class="fu">filter</span>(study <span class="sc">==</span> <span class="st">"DASSIM"</span>)</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>BSI <span class="ot">=</span> meta_join_KpSc <span class="sc">%&gt;%</span> <span class="fu">filter</span>(study <span class="sc">==</span> <span class="st">"bacteraemia"</span>)</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>BSI <span class="ot">=</span> BSI <span class="sc">%&gt;%</span> <span class="fu">filter</span>(Source.y <span class="sc">==</span> <span class="st">"Blood"</span>)</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>BSI<span class="sc">$</span>Source.y</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood"
+[10] "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood"
+[19] "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood"
+[28] "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood"
+[37] "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood"
+[46] "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood" "Blood"
+[55] "Blood" "Blood" "Blood"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb35"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="co">#DASSIM = DASSIM %&gt;% select(starts_with("ybt"))</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="co">#BSI= BSI %&gt;% select(starts_with("ybt"))</span></span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>DASSIM <span class="ot">&lt;-</span> DASSIM <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^ybt|^irp|^fyu"</span>))</span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>BSI <span class="ot">&lt;-</span> BSI <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^ybt|^irp|^fyu"</span>))</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>summarized_DASSIM  <span class="ot">&lt;-</span> DASSIM  <span class="sc">%&gt;%</span> <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), mean) <span class="sc">*</span> <span class="dv">100</span>)</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>summarized_BSI <span class="ot">&lt;-</span> BSI <span class="sc">%&gt;%</span> <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), mean) <span class="sc">*</span> <span class="dv">100</span>)</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>summarized_DASSIM<span class="sc">$</span>study <span class="ot">=</span> <span class="st">"DASSIM"</span></span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>summarized_BSI<span class="sc">$</span>study <span class="ot">=</span> <span class="st">"BSI"</span></span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Reshape and summarize data</span></span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>summarized_pc <span class="ot">=</span> <span class="fu">rbind</span>(summarized_DASSIM, summarized_BSI)</span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Bar plot</span></span>
+<span id="cb35-17"><a href="#cb35-17" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb35-18"><a href="#cb35-18" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(summarized_pc, <span class="fu">aes</span>(<span class="at">x =</span> study, <span class="at">y =</span> ybtA, <span class="at">fill =</span> study)) <span class="sc">+</span></span>
+<span id="cb35-19"><a href="#cb35-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb35-20"><a href="#cb35-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Category"</span>, <span class="at">y =</span> <span class="st">"Total Value"</span>, <span class="at">title =</span> <span class="st">"Bar Plot by Protein Category"</span>) <span class="sc">+</span></span>
+<span id="cb35-21"><a href="#cb35-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="5_analysing_virulence_factor_determinants_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="join-to-dassim-metadata" class="level3">
+<h3 class="anchored" data-anchor-id="join-to-dassim-metadata">3.5: Join to DASSIM metadata</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>DASSIM_meta <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"data/DASSIM_metadata.csv"</span>)</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>meta_join_DASSIM <span class="ot">=</span> meta_join <span class="sc">%&gt;%</span> </span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(DASSIM_meta, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">'accession'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="klebsiella-pneumoniae-species-complex-kpsc" class="level3">
+<h3 class="anchored" data-anchor-id="klebsiella-pneumoniae-species-complex-kpsc">3.6: Klebsiella pneumoniae species complex (KpSc)</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="co"># For KpSC</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(meta_join_DASSIM<span class="sc">$</span>Species)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "E. coli" NA        "KpSC"   </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>meta_join_KpSc_DASSIM <span class="ot">=</span> meta_join_DASSIM <span class="sc">%&gt;%</span> <span class="fu">filter</span>(Species <span class="sc">==</span> <span class="st">"KpSC"</span>)</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(meta_join<span class="sc">$</span>study)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "DASSIM"      NA            "bacteraemia"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>DASSIM <span class="ot">=</span> meta_join_KpSc_DASSIM <span class="sc">%&gt;%</span> <span class="fu">filter</span>(study <span class="sc">==</span> <span class="st">"DASSIM"</span>)</span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>DASSIM_sepsis <span class="ot">=</span> DASSIM <span class="sc">%&gt;%</span> <span class="fu">filter</span>(condition <span class="sc">==</span> <span class="st">"sepsis"</span>)</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>DASSIM_inpatient <span class="ot">=</span> DASSIM <span class="sc">%&gt;%</span> <span class="fu">filter</span>(condition <span class="sc">==</span> <span class="st">"inpatient"</span>)</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>DASSIM_community <span class="ot">=</span> DASSIM <span class="sc">%&gt;%</span> <span class="fu">filter</span>(condition <span class="sc">==</span> <span class="st">"community"</span>)</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a>BSI <span class="ot">=</span> meta_join_KpSc_DASSIM <span class="sc">%&gt;%</span> <span class="fu">filter</span>(study <span class="sc">==</span> <span class="st">"bacteraemia"</span>)</span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>BSI <span class="ot">=</span> BSI <span class="sc">%&gt;%</span> <span class="fu">filter</span>(Source.y <span class="sc">==</span> <span class="st">"Blood"</span>)</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a><span class="co">#DASSIM_sepsis = DASSIM_sepsis %&gt;% select(starts_with("ybt"))</span></span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a><span class="co">#DASSIM_inpatient = DASSIM_inpatient %&gt;% select(starts_with("ybt"))</span></span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a><span class="co">#DASSIM_community = DASSIM_community %&gt;% select(starts_with("ybt"))</span></span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a><span class="co">#BSI = BSI %&gt;% select(starts_with("ybt"))</span></span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Select columns that start with "ybt", "adr", or "ppy"</span></span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>DASSIM_sepsis <span class="ot">=</span> DASSIM_sepsis <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^ybt|^irp|^fyu"</span>))</span>
+<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a>DASSIM_inpatient <span class="ot">=</span> DASSIM_inpatient <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^ybt|^irp|^fyu"</span>))</span>
+<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a>DASSIM_community <span class="ot">=</span> DASSIM_community <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^ybt|^irp|^fyu"</span>))</span>
+<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a>BSI <span class="ot">=</span> BSI <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^ybt|^irp|^fyu"</span>))</span>
+<span id="cb41-19"><a href="#cb41-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-20"><a href="#cb41-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-21"><a href="#cb41-21" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(DASSIM_sepsis) <span class="co"># 138</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 138</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(DASSIM_inpatient) <span class="co"># 33</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 33</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(DASSIM_community) <span class="co"># 16</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 16</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(BSI) <span class="co"># 57</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 57</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb49"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="co"># summarized_DASSIM_sepsis = DASSIM_sepsis %&gt;% summarize(across(where(is.numeric), mean) * 100)</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>summarized_DASSIM_sepsis <span class="ot">=</span> DASSIM_sepsis <span class="sc">%&gt;%</span> <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span> <span class="fu">sum</span>(. <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>))</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>summarized_DASSIM_inpatient <span class="ot">=</span> DASSIM_inpatient <span class="sc">%&gt;%</span> <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span> <span class="fu">sum</span>(. <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>))</span>
+<span id="cb49-5"><a href="#cb49-5" aria-hidden="true" tabindex="-1"></a>summarized_DASSIM_community <span class="ot">=</span> DASSIM_community <span class="sc">%&gt;%</span> <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span> <span class="fu">sum</span>(. <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>))</span>
+<span id="cb49-6"><a href="#cb49-6" aria-hidden="true" tabindex="-1"></a>summarized_BSI <span class="ot">&lt;-</span> BSI <span class="sc">%&gt;%</span> <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span> <span class="fu">sum</span>(. <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>))</span>
+<span id="cb49-7"><a href="#cb49-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-8"><a href="#cb49-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-9"><a href="#cb49-9" aria-hidden="true" tabindex="-1"></a>summarized_DASSIM_sepsis<span class="sc">$</span>study <span class="ot">=</span> <span class="st">"DASSIM_sepsis"</span></span>
+<span id="cb49-10"><a href="#cb49-10" aria-hidden="true" tabindex="-1"></a>summarized_DASSIM_inpatient<span class="sc">$</span>study <span class="ot">=</span> <span class="st">"DASSIM_inpatient"</span></span>
+<span id="cb49-11"><a href="#cb49-11" aria-hidden="true" tabindex="-1"></a>summarized_DASSIM_community<span class="sc">$</span>study <span class="ot">=</span> <span class="st">"DASSIM_community"</span></span>
+<span id="cb49-12"><a href="#cb49-12" aria-hidden="true" tabindex="-1"></a>summarized_BSI<span class="sc">$</span>study <span class="ot">=</span> <span class="st">"BSI"</span></span>
+<span id="cb49-13"><a href="#cb49-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-14"><a href="#cb49-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Reshape and summarize data</span></span>
+<span id="cb49-15"><a href="#cb49-15" aria-hidden="true" tabindex="-1"></a>summarized_pc <span class="ot">=</span> <span class="fu">rbind</span>(summarized_DASSIM_sepsis, summarized_DASSIM_inpatient, summarized_DASSIM_community, summarized_BSI)</span>
+<span id="cb49-16"><a href="#cb49-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb49-17"><a href="#cb49-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Bar plot</span></span>
+<span id="cb49-18"><a href="#cb49-18" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb49-19"><a href="#cb49-19" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(summarized_pc, <span class="fu">aes</span>(<span class="at">x =</span> study, <span class="at">y =</span> ybtA, <span class="at">fill =</span> study)) <span class="sc">+</span></span>
+<span id="cb49-20"><a href="#cb49-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb49-21"><a href="#cb49-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Category"</span>, <span class="at">y =</span> <span class="st">"Total Value"</span>, <span class="at">title =</span> <span class="st">"Bar Plot by Protein Category"</span>) <span class="sc">+</span></span>
+<span id="cb49-22"><a href="#cb49-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="5_analysing_virulence_factor_determinants_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb50"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to long  ##</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>summarized_long_pc <span class="ot">=</span> summarized_pc <span class="sc">%&gt;%</span> <span class="fu">pivot_longer</span>(<span class="sc">!</span>study, <span class="at">names_to =</span> <span class="st">"gene"</span>, <span class="at">values_to =</span> <span class="st">"count"</span>)</span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>summarized_pc_for_paper_KpSc <span class="ot">=</span> summarized_long_pc <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(study) <span class="sc">%&gt;%</span> <span class="fu">summarize</span>(<span class="at">meant_count =</span> <span class="fu">mean</span>(count))</span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a>summarized_long_pc<span class="sc">$</span>order <span class="ot">&lt;-</span> <span class="fu">factor</span>(summarized_long_pc<span class="sc">$</span>study, <span class="at">levels =</span> <span class="fu">sort</span>(<span class="fu">unique</span>(summarized_long_pc<span class="sc">$</span>study)))</span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>level_order <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'BSI'</span>, <span class="st">'DASSIM_inpatient'</span>, <span class="st">'DASSIM_sepsis'</span>, <span class="st">"DASSIM_community"</span>) </span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>KPSC_plot <span class="ot">=</span> <span class="fu">ggplot</span>(summarized_long_pc, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">factor</span>(study, <span class="at">level =</span> level_order), <span class="at">y =</span> count, <span class="at">fill =</span> study)) <span class="sc">+</span></span>
+<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">0</span>, <span class="dv">100</span>) <span class="sc">+</span></span>
+<span id="cb50-14"><a href="#cb50-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Study"</span>, <span class="at">y =</span> <span class="st">"%"</span>, <span class="at">title =</span> <span class="st">"K. pneumoniae"</span>) <span class="sc">+</span></span>
+<span id="cb50-15"><a href="#cb50-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span> <span class="fu">facet_wrap</span>(<span class="sc">~</span> gene)</span>
+<span id="cb50-16"><a href="#cb50-16" aria-hidden="true" tabindex="-1"></a>KPSC_plot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="5_analysing_virulence_factor_determinants_files/figure-html/unnamed-chunk-12-2.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="e.-coli" class="level3">
+<h3 class="anchored" data-anchor-id="e.-coli">3.7: E. coli</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb51"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="co"># For Ecoli</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(meta_join_DASSIM<span class="sc">$</span>Species)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "E. coli" NA        "KpSC"   </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb53"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb53-1"><a href="#cb53-1" aria-hidden="true" tabindex="-1"></a>meta_join_Ecoli_DASSIM <span class="ot">=</span> meta_join_DASSIM <span class="sc">%&gt;%</span> <span class="fu">filter</span>(Species <span class="sc">==</span> <span class="st">"E. coli"</span>)</span>
+<span id="cb53-2"><a href="#cb53-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb53-3"><a href="#cb53-3" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(meta_join<span class="sc">$</span>study)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "DASSIM"      NA            "bacteraemia"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb55"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb55-1"><a href="#cb55-1" aria-hidden="true" tabindex="-1"></a>DASSIM <span class="ot">=</span> meta_join_Ecoli_DASSIM <span class="sc">%&gt;%</span> <span class="fu">filter</span>(study <span class="sc">==</span> <span class="st">"DASSIM"</span>)</span>
+<span id="cb55-2"><a href="#cb55-2" aria-hidden="true" tabindex="-1"></a>DASSIM_sepsis <span class="ot">=</span> DASSIM <span class="sc">%&gt;%</span> <span class="fu">filter</span>(condition <span class="sc">==</span> <span class="st">"sepsis"</span>)</span>
+<span id="cb55-3"><a href="#cb55-3" aria-hidden="true" tabindex="-1"></a>DASSIM_inpatient <span class="ot">=</span> DASSIM <span class="sc">%&gt;%</span> <span class="fu">filter</span>(condition <span class="sc">==</span> <span class="st">"inpatient"</span>)</span>
+<span id="cb55-4"><a href="#cb55-4" aria-hidden="true" tabindex="-1"></a>DASSIM_community <span class="ot">=</span> DASSIM <span class="sc">%&gt;%</span> <span class="fu">filter</span>(condition <span class="sc">==</span> <span class="st">"community"</span>)</span>
+<span id="cb55-5"><a href="#cb55-5" aria-hidden="true" tabindex="-1"></a>BSI <span class="ot">=</span> meta_join_Ecoli_DASSIM <span class="sc">%&gt;%</span> <span class="fu">filter</span>(study <span class="sc">==</span> <span class="st">"bacteraemia"</span>)</span>
+<span id="cb55-6"><a href="#cb55-6" aria-hidden="true" tabindex="-1"></a>BSI <span class="ot">=</span> BSI <span class="sc">%&gt;%</span> <span class="fu">filter</span>(Source.x <span class="sc">==</span> <span class="st">"Blood"</span>)</span>
+<span id="cb55-7"><a href="#cb55-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-8"><a href="#cb55-8" aria-hidden="true" tabindex="-1"></a><span class="co">#DASSIM_sepsis = DASSIM_sepsis %&gt;% select(starts_with("ybt"))</span></span>
+<span id="cb55-9"><a href="#cb55-9" aria-hidden="true" tabindex="-1"></a><span class="co">#DASSIM_inpatient = DASSIM_inpatient %&gt;% select(starts_with("ybt"))</span></span>
+<span id="cb55-10"><a href="#cb55-10" aria-hidden="true" tabindex="-1"></a><span class="co">#DASSIM_community = DASSIM_community %&gt;% select(starts_with("ybt"))</span></span>
+<span id="cb55-11"><a href="#cb55-11" aria-hidden="true" tabindex="-1"></a><span class="co">#BSI = BSI %&gt;% select(starts_with("ybt"))</span></span>
+<span id="cb55-12"><a href="#cb55-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-13"><a href="#cb55-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-14"><a href="#cb55-14" aria-hidden="true" tabindex="-1"></a>DASSIM_sepsis <span class="ot">=</span> DASSIM_sepsis <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^ybt|^irp|^fyu"</span>))</span>
+<span id="cb55-15"><a href="#cb55-15" aria-hidden="true" tabindex="-1"></a>DASSIM_inpatient <span class="ot">=</span> DASSIM_inpatient <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^ybt|^irp|^fyu"</span>))</span>
+<span id="cb55-16"><a href="#cb55-16" aria-hidden="true" tabindex="-1"></a>DASSIM_community <span class="ot">=</span> DASSIM_community <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^ybt|^irp|^fyu"</span>))</span>
+<span id="cb55-17"><a href="#cb55-17" aria-hidden="true" tabindex="-1"></a>BSI <span class="ot">=</span> BSI <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^ybt|^irp|^fyu"</span>))</span>
+<span id="cb55-18"><a href="#cb55-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb55-19"><a href="#cb55-19" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(DASSIM_sepsis) <span class="co"># 334</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 334</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb57"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb57-1"><a href="#cb57-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(DASSIM_inpatient) <span class="co"># 84</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 84</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb59"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb59-1"><a href="#cb59-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(DASSIM_community) <span class="co"># 31</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 31</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb61"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb61-1"><a href="#cb61-1" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(BSI) <span class="co"># 23</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 23</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb63"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb63-1"><a href="#cb63-1" aria-hidden="true" tabindex="-1"></a><span class="co"># summarized_DASSIM_sepsis = DASSIM_sepsis %&gt;% summarize(across(where(is.numeric), mean) * 100)</span></span>
+<span id="cb63-2"><a href="#cb63-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-3"><a href="#cb63-3" aria-hidden="true" tabindex="-1"></a>summarized_DASSIM_sepsis <span class="ot">=</span> DASSIM_sepsis <span class="sc">%&gt;%</span> <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span> <span class="fu">sum</span>(. <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>))</span>
+<span id="cb63-4"><a href="#cb63-4" aria-hidden="true" tabindex="-1"></a>summarized_DASSIM_inpatient <span class="ot">=</span> DASSIM_inpatient <span class="sc">%&gt;%</span> <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span> <span class="fu">sum</span>(. <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>))</span>
+<span id="cb63-5"><a href="#cb63-5" aria-hidden="true" tabindex="-1"></a>summarized_DASSIM_community <span class="ot">=</span> DASSIM_community <span class="sc">%&gt;%</span> <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span> <span class="fu">sum</span>(. <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>))</span>
+<span id="cb63-6"><a href="#cb63-6" aria-hidden="true" tabindex="-1"></a>summarized_BSI <span class="ot">&lt;-</span> BSI <span class="sc">%&gt;%</span> <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span> <span class="fu">sum</span>(. <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">*</span> <span class="dv">100</span>))</span>
+<span id="cb63-7"><a href="#cb63-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-8"><a href="#cb63-8" aria-hidden="true" tabindex="-1"></a>summarized_DASSIM_sepsis<span class="sc">$</span>study <span class="ot">=</span> <span class="st">"DASSIM_sepsis"</span></span>
+<span id="cb63-9"><a href="#cb63-9" aria-hidden="true" tabindex="-1"></a>summarized_DASSIM_inpatient<span class="sc">$</span>study <span class="ot">=</span> <span class="st">"DASSIM_inpatient"</span></span>
+<span id="cb63-10"><a href="#cb63-10" aria-hidden="true" tabindex="-1"></a>summarized_DASSIM_community<span class="sc">$</span>study <span class="ot">=</span> <span class="st">"DASSIM_community"</span></span>
+<span id="cb63-11"><a href="#cb63-11" aria-hidden="true" tabindex="-1"></a>summarized_BSI<span class="sc">$</span>study <span class="ot">=</span> <span class="st">"BSI"</span></span>
+<span id="cb63-12"><a href="#cb63-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-13"><a href="#cb63-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Reshape and summarize data</span></span>
+<span id="cb63-14"><a href="#cb63-14" aria-hidden="true" tabindex="-1"></a>summarized_pc <span class="ot">=</span> <span class="fu">rbind</span>(summarized_DASSIM_sepsis, summarized_DASSIM_inpatient, summarized_DASSIM_community, summarized_BSI)</span>
+<span id="cb63-15"><a href="#cb63-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb63-16"><a href="#cb63-16" aria-hidden="true" tabindex="-1"></a><span class="co"># Bar plot</span></span>
+<span id="cb63-17"><a href="#cb63-17" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb63-18"><a href="#cb63-18" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(summarized_pc, <span class="fu">aes</span>(<span class="at">x =</span> study, <span class="at">y =</span> ybtA, <span class="at">fill =</span> study)) <span class="sc">+</span></span>
+<span id="cb63-19"><a href="#cb63-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb63-20"><a href="#cb63-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Category"</span>, <span class="at">y =</span> <span class="st">"Total Value"</span>, <span class="at">title =</span> <span class="st">"Bar Plot by Protein Category"</span>) <span class="sc">+</span></span>
+<span id="cb63-21"><a href="#cb63-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="5_analysing_virulence_factor_determinants_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+<div class="sourceCode cell-code" id="cb64"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb64-1"><a href="#cb64-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert to long  ##</span></span>
+<span id="cb64-2"><a href="#cb64-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-3"><a href="#cb64-3" aria-hidden="true" tabindex="-1"></a>summarized_long_pc <span class="ot">=</span> summarized_pc <span class="sc">%&gt;%</span> <span class="fu">pivot_longer</span>(<span class="sc">!</span>study, <span class="at">names_to =</span> <span class="st">"gene"</span>, <span class="at">values_to =</span> <span class="st">"count"</span>)</span>
+<span id="cb64-4"><a href="#cb64-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-5"><a href="#cb64-5" aria-hidden="true" tabindex="-1"></a>summarized_pc_for_paper_Ec <span class="ot">=</span> summarized_long_pc <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(study) <span class="sc">%&gt;%</span> <span class="fu">summarize</span>(<span class="at">meant_count =</span> <span class="fu">mean</span>(count))</span>
+<span id="cb64-6"><a href="#cb64-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-7"><a href="#cb64-7" aria-hidden="true" tabindex="-1"></a>summarized_long_pc<span class="sc">$</span>order <span class="ot">&lt;-</span> <span class="fu">factor</span>(summarized_long_pc<span class="sc">$</span>study, <span class="at">levels =</span> <span class="fu">sort</span>(<span class="fu">unique</span>(summarized_long_pc<span class="sc">$</span>study)))</span>
+<span id="cb64-8"><a href="#cb64-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-9"><a href="#cb64-9" aria-hidden="true" tabindex="-1"></a>level_order <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"DASSIM_community"</span>, <span class="st">'DASSIM_inpatient'</span>, <span class="st">'DASSIM_sepsis'</span>, <span class="st">'BSI'</span>) </span>
+<span id="cb64-10"><a href="#cb64-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb64-11"><a href="#cb64-11" aria-hidden="true" tabindex="-1"></a>Ecoli_plot <span class="ot">=</span> <span class="fu">ggplot</span>(summarized_long_pc, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">factor</span>(study, <span class="at">level =</span> level_order), <span class="at">y =</span> count, <span class="at">fill =</span> study)) <span class="sc">+</span></span>
+<span id="cb64-12"><a href="#cb64-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb64-13"><a href="#cb64-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="dv">0</span>, <span class="dv">100</span>) <span class="sc">+</span></span>
+<span id="cb64-14"><a href="#cb64-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Study"</span>, <span class="at">y =</span> <span class="st">"%"</span>, <span class="at">title =</span> <span class="st">"E. coli"</span>) <span class="sc">+</span></span>
+<span id="cb64-15"><a href="#cb64-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span> <span class="fu">facet_wrap</span>(<span class="sc">~</span> gene)</span>
+<span id="cb64-16"><a href="#cb64-16" aria-hidden="true" tabindex="-1"></a>Ecoli_plot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="5_analysing_virulence_factor_determinants_files/figure-html/unnamed-chunk-13-2.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="e.-coli-and-kpsc-plotted-together" class="level3">
+<h3 class="anchored" data-anchor-id="e.-coli-and-kpsc-plotted-together">3.8: E. coli and KpSc plotted together</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb65"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb65-1"><a href="#cb65-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggpubr)</span>
+<span id="cb65-2"><a href="#cb65-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggarrange</span>(KPSC_plot, Ecoli_plot, <span class="at">ncol =</span> <span class="dv">2</span>, <span class="at">nrow =</span> <span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="5_analysing_virulence_factor_determinants_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    // For code content inside modals, clipBoardJS needs to be initialized with a container option
+    // TODO: Check when it could be a function (https://github.com/zenorocha/clipboard.js/issues/860)
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

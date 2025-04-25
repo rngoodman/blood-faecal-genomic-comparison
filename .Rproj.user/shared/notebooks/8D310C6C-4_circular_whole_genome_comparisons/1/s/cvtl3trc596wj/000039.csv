@@ -1,0 +1,3 @@
+"0",""
+"0","# Add a title to the plot with increased text size"
+"0","title(paste0(blood, "" "", ""vs"", "" "", faecal), cex.main = 1)"

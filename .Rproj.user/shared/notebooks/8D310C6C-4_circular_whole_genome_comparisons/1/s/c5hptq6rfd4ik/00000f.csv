@@ -1,0 +1,5 @@
+"0",""
+"0","f_pc_ident = 99.5"
+"0","f_length = 1500"
+"0",""
+"0","blast_data = blast_data %>% filter(pident >= f_pc_ident & length > f_length)"
