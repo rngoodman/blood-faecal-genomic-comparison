@@ -1,6 +1,6 @@
 # Blood Faecal Genomic comparisons
 
-This repository includes the code used to run the analysis in a recent mauuscript.
+This repository includes the code used to run the analysis in a recent manuscript.
 
 * [Figure 1](https://rngoodman.github.io/blood-faecal-genomic-comparison/blob/main/vignettes/1_ANI_and_SNP_distance_matrices.html) - ANI and SNP distance matrices
 * [Figure 2](https://rngoodman.github.io/blood-faecal-genomic-comparison/blob/main/vignettes/2-core_genome_phylogenetic_tree.html) - core genome phylogenetic tree
