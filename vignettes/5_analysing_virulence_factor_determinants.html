@@ -119,7 +119,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="part-1---genome-download-and-virulence-factor-screening-with-abricate">Part 1 - Genome download and virulence factor screening with abricate</h2>
 <section id="download-reads-and-run-assemblies" class="level3">
 <h3 class="anchored" data-anchor-id="download-reads-and-run-assemblies">1.1: Download reads and run assemblies</h3>
-<p>See the <a href="https://rngoodman.github.io/blood-faecal-genomic-comparison/genome_assemblies.html">code on how to download reads and run assemblies</a></p>
+<p>See the <a href="https://rngoodman.github.io/blood-faecal-genomic-comparison/vignettes/genome_assemblies.html">code on how to download reads and run assemblies</a></p>
 </section>
 <section id="run-abricate-on-genomes" class="level3">
 <h3 class="anchored" data-anchor-id="run-abricate-on-genomes">1.2: Run abricate on genomes</h3>
@@ -146,7 +146,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RColorBrewer)</span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Reading in data</span></span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>abricate_output <span class="ot">=</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="st">"data/all_paired_blood_faecal_hybracter_vfdb_fasta_L60_T90_plus_BSI_indicators.csv"</span>)</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>abricate_output <span class="ot">=</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="st">"../data/all_paired_blood_faecal_hybracter_vfdb_fasta_L60_T90_plus_BSI_indicators.csv"</span>)</span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>ab_tab <span class="ot">=</span> abricate_output</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -382,7 +382,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Generate the heatmap with annotations</span></span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>isolates <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"data/Isolate_species.csv"</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>isolates <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"../data/Isolate_species.csv"</span>)</span>
 <span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  </span>
 <span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>isolates_df <span class="ot">=</span> <span class="fu">as.data.frame</span>(isolates)</span>
 <span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
@@ -396,7 +396,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>annotation_row <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Species =</span> isolates_df<span class="sc">$</span>Species)</span>
 <span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(annotation_row) <span class="ot">&lt;-</span> isolates_df<span class="sc">$</span>Isolate</span>
 <span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>vfdb_class <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"data/VFDB_classes.csv"</span>)</span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a>vfdb_class <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"../data/VFDB_classes.csv"</span>)</span>
 <span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>vfdb_class_df <span class="ot">=</span> <span class="fu">as.data.frame</span>(vfdb_class)</span>
 <span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a></span>
@@ -452,7 +452,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(RColorBrewer)</span>
 <span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a><span class="co"># 772 Malawi Kleb Strains</span></span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>abricate_output <span class="ot">=</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="st">"data/all_abricate_773_Ec_Kp_CHL_VFDB_fasta_L60_T90.csv"</span>)</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>abricate_output <span class="ot">=</span> readr<span class="sc">::</span><span class="fu">read_csv</span>(<span class="st">"../data/all_abricate_773_Ec_Kp_CHL_VFDB_fasta_L60_T90.csv"</span>)</span>
 <span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>ab_tab <span class="ot">=</span> abricate_output </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -563,9 +563,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="join-to-metadata" class="level3">
 <h3 class="anchored" data-anchor-id="join-to-metadata">3.4: Join to metadata</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>metadata <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"data/all_773_DASSIM_BSI_metadata.csv"</span>)</span>
-<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>BSI_metadata_Ec <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"data/BSI_metadata_Ec.csv"</span>)</span>
-<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>BSI_metadata_KpSc <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"data/BSI_metadata_KpSc_2.csv"</span>)</span>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>metadata <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"../data/all_773_DASSIM_BSI_metadata.csv"</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>BSI_metadata_Ec <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"../data/BSI_metadata_Ec.csv"</span>)</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>BSI_metadata_KpSc <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"../data/BSI_metadata_KpSc_2.csv"</span>)</span>
 <span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
 <span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
@@ -679,7 +679,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <section id="join-to-dassim-metadata" class="level3">
 <h3 class="anchored" data-anchor-id="join-to-dassim-metadata">3.5: Join to DASSIM metadata</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>DASSIM_meta <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"data/DASSIM_metadata.csv"</span>)</span>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>DASSIM_meta <span class="ot">=</span> <span class="fu">read_csv</span>(<span class="st">"../data/DASSIM_metadata.csv"</span>)</span>
 <span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
 <span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>

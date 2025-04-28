@@ -1,7 +1,7 @@
 ---
 title: "5: Analysing virulence factor determinants"
 author: "Richard Goodman"
-date: "`r Sys.Date()`"
+date: "April 24, 2025"
 output: html_document
 ---
 
@@ -21,7 +21,7 @@ It also shows how the BSI and DASSIM databases were compared.
 
 ### 1.1: Download reads and run assemblies
 
-See the [code on how to download reads and run assemblies](https://rngoodman.github.io/blood-faecal-genomic-comparison/genome_assemblies.html)
+See the [code on how to download reads and run assemblies](https://rngoodman.github.io/blood-faecal-genomic-comparison/vignettes/genome_assemblies.html)
 
 ### 1.2: Run abricate on genomes 
 
@@ -52,7 +52,7 @@ library(pheatmap)
 library(RColorBrewer)
 
 # Reading in data
-abricate_output = readr::read_csv("data/all_paired_blood_faecal_hybracter_vfdb_fasta_L60_T90_plus_BSI_indicators.csv")
+abricate_output = readr::read_csv("../data/all_paired_blood_faecal_hybracter_vfdb_fasta_L60_T90_plus_BSI_indicators.csv")
 
 ab_tab = abricate_output
 
@@ -234,7 +234,7 @@ pheatmap(df)
 ```{r, fig.width=20}
 # Generate the heatmap with annotations
 
-isolates = read_csv("data/Isolate_species.csv")
+isolates = read_csv("../data/Isolate_species.csv")
   
 isolates_df = as.data.frame(isolates)
 
@@ -248,7 +248,7 @@ species_colors <- c("K. pneumoniae" = "#DDAD3B",
 annotation_row <- data.frame(Species = isolates_df$Species)
 rownames(annotation_row) <- isolates_df$Isolate
 
-vfdb_class = read_csv("data/VFDB_classes.csv")
+vfdb_class = read_csv("../data/VFDB_classes.csv")
 
 vfdb_class_df = as.data.frame(vfdb_class)
 
@@ -299,7 +299,7 @@ library(tibble)
 library(RColorBrewer)
 
 # 772 Malawi Kleb Strains
-abricate_output = readr::read_csv("data/all_abricate_773_Ec_Kp_CHL_VFDB_fasta_L60_T90.csv")
+abricate_output = readr::read_csv("../data/all_abricate_773_Ec_Kp_CHL_VFDB_fasta_L60_T90.csv")
 
 ab_tab = abricate_output 
 
@@ -368,9 +368,9 @@ library(dplyr)
 
 ```{r}
 
-metadata = read_csv("data/all_773_DASSIM_BSI_metadata.csv")
-BSI_metadata_Ec = read_csv("data/BSI_metadata_Ec.csv")
-BSI_metadata_KpSc = read_csv("data/BSI_metadata_KpSc_2.csv")
+metadata = read_csv("../data/all_773_DASSIM_BSI_metadata.csv")
+BSI_metadata_Ec = read_csv("../data/BSI_metadata_Ec.csv")
+BSI_metadata_KpSc = read_csv("../data/BSI_metadata_KpSc_2.csv")
 
 library(dplyr)
 library(stringr)
@@ -462,7 +462,7 @@ ggplot(summarized_pc, aes(x = study, y = ybtA, fill = study)) +
 
 ```{r}
 
-DASSIM_meta = read_csv("data/DASSIM_metadata.csv")
+DASSIM_meta = read_csv("../data/DASSIM_metadata.csv")
 
 library(dplyr)
 library(stringr)

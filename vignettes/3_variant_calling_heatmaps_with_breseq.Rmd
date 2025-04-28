@@ -1,7 +1,7 @@
 ---
 title: "3: Variant calling heatmaps with breseq"
 author: "Richard Goodman"
-date: "`r Sys.Date()`"
+date: "April 24, 2025"
 output: html_document
 ---
 
@@ -19,7 +19,7 @@ This tutorial will show how to visualise the output from variant calling with br
 
 ### 1.1: Download reads and run assemblies
 
-See the [code on how to download reads and run assemblies](https://rngoodman.github.io/blood-faecal-genomic-comparison/genome_assemblies.html)
+See the [code on how to download reads and run assemblies](https://rngoodman.github.io/blood-faecal-genomic-comparison/vignettes/genome_assemblies.html)
 
 ### 1.2: Annotate genome assemblies with prokka
 
@@ -79,7 +79,7 @@ library(RColorBrewer)
 library(ggplot2)
 
 # Load the data (adjust the path to your file location)
-file_path = "data/paired_blood_faecal_breseq_comparisons_for_R.xlsx"
+file_path = "../data/paired_blood_faecal_breseq_comparisons_for_R.xlsx"
 data = read_excel(file_path)
 
 ```

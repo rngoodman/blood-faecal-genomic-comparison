@@ -120,7 +120,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="part-1---genome-download-and-comparison-in-bash">Part 1 - Genome download and comparison in bash</h2>
 <section id="download-reads-and-run-assemblies" class="level3">
 <h3 class="anchored" data-anchor-id="download-reads-and-run-assemblies">1.1: Download reads and run assemblies</h3>
-<p>See the <a href="https://rngoodman.github.io/blood-faecal-genomic-comparison/genome_assemblies.html">code on how to download reads and run assemblies</a></p>
+<p>See the <a href="https://rngoodman.github.io/blood-faecal-genomic-comparison/vignettes/genome_assemblies.html">code on how to download reads and run assemblies</a></p>
 </section>
 <section id="download-reads-and-run-assemblies-1" class="level3">
 <h3 class="anchored" data-anchor-id="download-reads-and-run-assemblies-1">1.2: Download reads and run assemblies</h3>
@@ -227,7 +227,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(blast_data)</span>
 <span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>}</span>
 <span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>blast_data <span class="ot">&lt;-</span> <span class="fu">parse_blast</span>(<span class="st">"BLAST_data/FSBL1386_vs_FSFC1386.blastn"</span>)</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>blast_data <span class="ot">&lt;-</span> <span class="fu">parse_blast</span>(<span class="st">"../BLAST_data/FSBL1386_vs_FSFC1386.blastn"</span>)</span>
 <span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>blood <span class="ot">=</span> <span class="st">"FSBL1386"</span></span>
 <span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>faecal <span class="ot">=</span> <span class="st">"FSFC1386"</span></span>
@@ -258,8 +258,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Read contig lengths from the seqkit output</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>contig_lengths_ref <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="st">"BLAST_data/FSBL1386_lengths.tsv"</span>, <span class="at">header =</span> <span class="cn">FALSE</span>, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>contig_lengths_q <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="st">"BLAST_data/FSFC1386_lengths.tsv"</span>, <span class="at">header =</span> <span class="cn">FALSE</span>, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>contig_lengths_ref <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="st">"../BLAST_data/FSBL1386_lengths.tsv"</span>, <span class="at">header =</span> <span class="cn">FALSE</span>, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>contig_lengths_q <span class="ot">&lt;-</span> <span class="fu">read.table</span>(<span class="st">"../BLAST_data/FSFC1386_lengths.tsv"</span>, <span class="at">header =</span> <span class="cn">FALSE</span>, <span class="at">sep =</span> <span class="st">"</span><span class="sc">\t</span><span class="st">"</span>, <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span>)</span>
 <span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>contig_lengths <span class="ot">=</span> <span class="fu">rbind</span>(contig_lengths_ref, contig_lengths_q)</span>
 <span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>

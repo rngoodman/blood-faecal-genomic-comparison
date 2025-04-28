@@ -1,5 +1,7 @@
 ---
 title: "1: ANI and SNP distance matrices"
+author: "Richard Goodman"
+date: "`r Sys.Date()`"
 format: html
 ---
 
@@ -111,7 +113,7 @@ First we will produce an ANI matrix for *Klebsiella pneumoniae* species types @K
 
 # Call the function to create the heatmap
 fig_title = "ANI KpSc"
-input_file = "data/JSpeciesWS_all_hybracter_1448_LR_FC1654_FC2240_UNI_ANIb_half_triangle_FC_rearranged_Klebsiella_spp.xlsx"
+input_file = "../data/JSpeciesWS_all_hybracter_1448_LR_FC1654_FC2240_UNI_ANIb_half_triangle_FC_rearranged_Klebsiella_spp.xlsx"
 create_ani_heatmap_rotate(title=fig_title, input_file=input_file, rotation=90, lower_legend=93, upper_legend=100)
 ```
 
@@ -124,7 +126,7 @@ Next we will produce an ANI matrix for *E. coli* species types @Ec-ANI
 
 # Call the function to create the heatmap
 fig_title = "ANI E.coli"
-input_file = "data/JSpeciesWS_all_hybracter_1448_LR_FC1654_FC2240_UNI_ANIb_half_triangle_FC_rearranged_E.coli.xlsx"
+input_file = "../data/JSpeciesWS_all_hybracter_1448_LR_FC1654_FC2240_UNI_ANIb_half_triangle_FC_rearranged_E.coli.xlsx"
 create_ani_heatmap_rotate(title=fig_title, input_file=input_file, rotation=90, lower_legend=93, upper_legend=100)
 ```
 
@@ -202,7 +204,7 @@ First we will produce an SNP distance matrix for *Klebsiella pneumoniae* species
 
 # Call the function to create the heatmap
 fig_title = "SNP distances KpSc"
-input_file = "data/snp_matrix_all_R1386_half_triangle_FC_Klebsiella_spp.xlsx"
+input_file = "../data/snp_matrix_all_R1386_half_triangle_FC_Klebsiella_spp.xlsx"
 create_snp_heatmap(title=fig_title, input_file=input_file, rotation=90)
 ```
 
@@ -215,6 +217,6 @@ Next we will produce an SNP distance matrix for *E. coli* species types @Ec-SNP
 
 # Call the function to create the heatmap
 fig_title = "SNP distances E. coli"
-input_file = "data/snp_matrix_all_R1386_half_triangle_FC_E.coli.xlsx"
+input_file = "../data/snp_matrix_all_R1386_half_triangle_FC_E.coli.xlsx"
 create_snp_heatmap(title=fig_title, input_file=input_file, rotation=90)
 ```

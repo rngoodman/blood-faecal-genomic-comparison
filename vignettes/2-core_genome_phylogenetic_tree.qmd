@@ -1,5 +1,7 @@
 ---
 title: "2: Core genome phylogenetic tree"
+author: "Richard Goodman"
+date: "April 24, 2025"
 format: html
 ---
 

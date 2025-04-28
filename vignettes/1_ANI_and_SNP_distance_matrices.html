@@ -6,6 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
+<meta name="author" content="Richard Goodman">
 
 <title>1: ANI and SNP distance matrices</title>
 <style>
@@ -86,7 +87,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 <div class="quarto-title-meta">
 
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Richard Goodman </p>
+          </div>
+  </div>
     
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">Invalid Date</p>
+    </div>
+  </div>
   
     
   </div>
@@ -106,7 +119,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="part-1---ani-matrix-with-python">Part 1 - ANI matrix with python</h2>
 <section id="install-libraries" class="level3">
 <h3 class="anchored" data-anchor-id="install-libraries">1.1: Install libraries</h3>
-<div id="6064a63d" class="cell" data-execution_count="1">
+<div id="cc00e17f" class="cell" data-execution_count="1">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Install libraries as necessary </span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="co">#pip install openpyxl </span></span>
@@ -118,7 +131,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co">#import importlib.metadata</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Next load the libraries</p>
-<div id="3c0b4698" class="cell" data-execution_count="2">
+<div id="1c297e5f" class="cell" data-execution_count="2">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> pandas <span class="im">as</span> pd </span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt </span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> matplotlib <span class="im">as</span> mpl </span>
@@ -128,7 +141,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </section>
 <section id="create-a-function-which-makes-a-ani-heatmap" class="level3">
 <h3 class="anchored" data-anchor-id="create-a-function-which-makes-a-ani-heatmap">1.2: Create a function which makes a ANI heatmap</h3>
-<div id="86ff7eba" class="cell" data-execution_count="3">
+<div id="96fe5940" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> create_ani_heatmap_rotate(title, input_file, rotation<span class="op">=</span><span class="dv">0</span>, lower_legend<span class="op">=</span><span class="dv">90</span>, upper_legend<span class="op">=</span><span class="dv">100</span>):</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co">    Reads ANI values from a table and creates a triangular heatmap with rotation options.</span></span>
@@ -195,7 +208,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="cell-KpSc-ANI" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Call the function to create the heatmap</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>fig_title <span class="op">=</span> <span class="st">"ANI KpSc"</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>input_file <span class="op">=</span> <span class="st">"data/JSpeciesWS_all_hybracter_1448_LR_FC1654_FC2240_UNI_ANIb_half_triangle_FC_rearranged_Klebsiella_spp.xlsx"</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>input_file <span class="op">=</span> <span class="st">"../data/JSpeciesWS_all_hybracter_1448_LR_FC1654_FC2240_UNI_ANIb_half_triangle_FC_rearranged_Klebsiella_spp.xlsx"</span></span>
 <span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>create_ani_heatmap_rotate(title<span class="op">=</span>fig_title, input_file<span class="op">=</span>input_file, rotation<span class="op">=</span><span class="dv">90</span>, lower_legend<span class="op">=</span><span class="dv">93</span>, upper_legend<span class="op">=</span><span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Warning: Missing or invalid values found. Filling with 0.</code></pre>
@@ -213,7 +226,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="cell-Ec-ANI" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Call the function to create the heatmap</span></span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>fig_title <span class="op">=</span> <span class="st">"ANI E.coli"</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>input_file <span class="op">=</span> <span class="st">"data/JSpeciesWS_all_hybracter_1448_LR_FC1654_FC2240_UNI_ANIb_half_triangle_FC_rearranged_E.coli.xlsx"</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>input_file <span class="op">=</span> <span class="st">"../data/JSpeciesWS_all_hybracter_1448_LR_FC1654_FC2240_UNI_ANIb_half_triangle_FC_rearranged_E.coli.xlsx"</span></span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>create_ani_heatmap_rotate(title<span class="op">=</span>fig_title, input_file<span class="op">=</span>input_file, rotation<span class="op">=</span><span class="dv">90</span>, lower_legend<span class="op">=</span><span class="dv">93</span>, upper_legend<span class="op">=</span><span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Warning: Missing or invalid values found. Filling with 0.</code></pre>
@@ -234,7 +247,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p>Make sure you have all the required libraries installed, if you need to install them see <a href="#install-libraries">Part 1.1: Install libraries</a></p>
 <section id="create-a-function-which-makes-a-snp-distance-heatmap" class="level3">
 <h3 class="anchored" data-anchor-id="create-a-function-which-makes-a-snp-distance-heatmap">2.1: Create a function which makes a SNP distance heatmap</h3>
-<div id="087555e1" class="cell" data-execution_count="6">
+<div id="ac70433e" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> create_snp_heatmap(title, input_file, rotation<span class="op">=</span><span class="dv">0</span>):</span>
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">"""</span></span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co">    Reads ANI values from a table and creates a triangular heatmap.</span></span>
@@ -297,7 +310,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="cell-KpSc-SNP" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb9"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Call the function to create the heatmap</span></span>
 <span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>fig_title <span class="op">=</span> <span class="st">"SNP distances KpSc"</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>input_file <span class="op">=</span> <span class="st">"data/snp_matrix_all_R1386_half_triangle_FC_Klebsiella_spp.xlsx"</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>input_file <span class="op">=</span> <span class="st">"../data/snp_matrix_all_R1386_half_triangle_FC_Klebsiella_spp.xlsx"</span></span>
 <span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>create_snp_heatmap(title<span class="op">=</span>fig_title, input_file<span class="op">=</span>input_file, rotation<span class="op">=</span><span class="dv">90</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Warning: Missing or invalid values found. Filling with 0.</code></pre>
@@ -315,7 +328,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div id="cell-Ec-SNP" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Call the function to create the heatmap</span></span>
 <span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>fig_title <span class="op">=</span> <span class="st">"SNP distances E. coli"</span></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>input_file <span class="op">=</span> <span class="st">"data/snp_matrix_all_R1386_half_triangle_FC_E.coli.xlsx"</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>input_file <span class="op">=</span> <span class="st">"../data/snp_matrix_all_R1386_half_triangle_FC_E.coli.xlsx"</span></span>
 <span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>create_snp_heatmap(title<span class="op">=</span>fig_title, input_file<span class="op">=</span>input_file, rotation<span class="op">=</span><span class="dv">90</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>Warning: Missing or invalid values found. Filling with 0.</code></pre>

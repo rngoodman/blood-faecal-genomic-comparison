@@ -1,7 +1,7 @@
 ---
 title: "4: Circular Whole Genome Comparison"
 author: "Richard Goodman"
-date: "`r Sys.Date()`"
+date: "April 24, 2025"
 output: html_document
 ---
 
@@ -23,7 +23,7 @@ For a more in-depth tutorial on circular whole genome comparison see my [circula
 
 ### 1.1: Download reads and run assemblies
 
-See the [code on how to download reads and run assemblies](https://rngoodman.github.io/blood-faecal-genomic-comparison/genome_assemblies.html)
+See the [code on how to download reads and run assemblies](https://rngoodman.github.io/blood-faecal-genomic-comparison/vignettes/genome_assemblies.html)
 
 ### 1.2: Download reads and run assemblies
 
@@ -137,7 +137,7 @@ parse_blast <- function(blast_file) {
   return(blast_data)
 }
 
-blast_data <- parse_blast("BLAST_data/FSBL1386_vs_FSFC1386.blastn")
+blast_data <- parse_blast("../BLAST_data/FSBL1386_vs_FSFC1386.blastn")
 
 blood = "FSBL1386"
 faecal = "FSFC1386"
@@ -152,8 +152,8 @@ head(blast_data)
 library(dplyr)
 
 # Read contig lengths from the seqkit output
-contig_lengths_ref <- read.table("BLAST_data/FSBL1386_lengths.tsv", header = FALSE, sep = "\t", stringsAsFactors = FALSE)
-contig_lengths_q <- read.table("BLAST_data/FSFC1386_lengths.tsv", header = FALSE, sep = "\t", stringsAsFactors = FALSE)
+contig_lengths_ref <- read.table("../BLAST_data/FSBL1386_lengths.tsv", header = FALSE, sep = "\t", stringsAsFactors = FALSE)
+contig_lengths_q <- read.table("../BLAST_data/FSFC1386_lengths.tsv", header = FALSE, sep = "\t", stringsAsFactors = FALSE)
 
 contig_lengths = rbind(contig_lengths_ref, contig_lengths_q)
 
