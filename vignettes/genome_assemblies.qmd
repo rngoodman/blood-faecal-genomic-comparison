@@ -1,6 +1,14 @@
 ---
 title: "Genome assemblies"
+author: "Richard Goodman"
+date: "April 24, 2025"
 format: html
 ---
 
-This will be populated once the genomes become available. 
+All reads (both short- and long-read) have been submitted to NCBI under the project ID PRJNA1254181 (but are not yet publicably available).
+
+The genomes were mainly assembled using [hybracter](https://github.com/gbouras13/hybracter) which assembles long-reads and polishes with short-reads (i.e. a long-read first hybrid assembly) to produce accurate and complete genomes. Some were also assembled using [flye](https://github.com/mikolmogorov/Flye) (long-read only) and [unicycler](https://github.com/rrwick/Unicycler) (short-read first hybrid assembly)
+
+For more information about how the genomes were assemblied see the methods section of the associated preprint on BioRxiv:
+
+[Goodman, R.N., Moyo, S.J., Memelis, I., Khanijau, A., Manyahi, J., Kibwana, U.O., Aboud, S., Blomberg, B., Langeland, N. & Roberts, A.P. (2025) Genomic comparison of highly related pairs of *E. coli* and *K. pneumoniae* isolated from faeces and blood of the same neonatal patients hospitalized with fever in Dar es Salaam, Tanzania. bioRxiv. doi:10.1101/2025.04.28.650962.](https://doi.org/10.1101/2025.04.28.650962)
